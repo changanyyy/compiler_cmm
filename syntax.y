@@ -5,7 +5,7 @@
 #include<stdarg.h>
 #include<assert.h>
 #include"lex.yy.c"
-#include"dec.h"
+#include"include/dec.h"
 
   #define YYERROR_VERBOSE 1
 
