@@ -1,0 +1,2 @@
+This is the repository that contains the project I create for Principles and Techniques of Compilers.
+It's a tiny compiler for a programming language C--. It's my first time to implement a compiler, so there may be bugs.
