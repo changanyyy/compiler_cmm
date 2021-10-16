@@ -1,0 +1,4 @@
+!lexical main.c Makefile README.md syntax.y 
+!include/dec.h include/node.h 
+!util/rbtree.h util/rbtree.c util/tree_operation.h util/tree_operation.c
+!symtab
