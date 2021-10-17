@@ -1,5 +1,5 @@
-#ifndef _DEC_H_
-#define _DEC_H_
+#ifndef _SYNTAX_H_
+#define _SYNTAX_H_
 
 
 

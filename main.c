@@ -1,6 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include"include/dec.h"
+#include"include/syntax.h"
 #include"assert.h"
 #include"syntax.tab.h"
 

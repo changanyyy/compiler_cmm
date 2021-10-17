@@ -95,18 +95,11 @@ static inline struct page * rb_insert_page_cache(struct inode * inode,
 #define	_LINUX_RBTREE_H
 
 #undef NULL
-#if defined(__cplusplus)
-#define NULL 0
-#else
 #define NULL ((void *)0)
-#endif
+
 
 #undef offsetof
-#ifdef __compiler_offsetof
-#define offsetof(TYPE,MEMBER) __compiler_offsetof(TYPE,MEMBER)
-#else
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
-#endif
 
 #define container_of(ptr, type, member) ({			\
         const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
