@@ -4,7 +4,7 @@
 
 
 
-
+//分配函数
 GENF(Program, 0){
     switch (node->no)
     {
@@ -13,9 +13,12 @@ GENF(Program, 0){
     }
 }
 
+//具体处理函数
 GENF(Program, 1){
 
 }
+
+
 
 
 GENF(ExtDefList, 0){

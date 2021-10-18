@@ -9,6 +9,11 @@
 
 #define CONCAT(arg0, arg1) arg0 ## arg1
 
+
+//用来自动生成函数
+//Name0代表头为Name的产生式的调度函数
+//语法分析树节点的no域记录产生式标号，通过判断语法分析节点标号来分配到相应的Name-no函数
+//具体见semantic.c
 #define GENF(name,num) \
     void name##num(struct GTNode *node)
 
