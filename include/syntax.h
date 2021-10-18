@@ -21,6 +21,9 @@ struct GTNode{
 
     int first_line;
     
+    //产生式标号，在语义分析有用
+    int no;
+
     struct GTNode *children;
     struct GTNode *next;
 } *root;

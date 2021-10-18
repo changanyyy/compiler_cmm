@@ -1,7 +1,7 @@
 #include"symtab.h"
 #include<stdlib.h>
 #include"../include/syntax.h"
-#include"../syntax.tab.c"
+#include"../syntax.tab.h"
 
 //创建一个表项，返回表项指针
 STE *create_entry(bool isFunction, Type *type, struct GTNode *syntaxNode){

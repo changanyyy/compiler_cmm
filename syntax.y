@@ -64,63 +64,63 @@
 %%
 
 Program: 
-    ExtDefList                          { $$ = newnode("Program", UNTERMINAL, 1, @$.first_line, $1); root = $$; }
+    ExtDefList                          { $$ = newnode("Program", UNTERMINAL, 1, @$.first_line, $1); root = $$; $$->no = 1;}
     ;
 ExtDefList:  
-    ExtDef ExtDefList                   { $$ = newnode("ExtDefList", UNTERMINAL, 2, @$.first_line, $1, $2); }
-    |                                   { $$ = newnode("ExtDefList", EPSILON, 0,  @$.first_line); }    
+    ExtDef ExtDefList                   { $$ = newnode("ExtDefList", UNTERMINAL, 2, @$.first_line, $1, $2); $$->no = 1;}
+    |                                   { $$ = newnode("ExtDefList", EPSILON, 0,  @$.first_line); $$->no = 2;}    
     ;
 ExtDef: 
-    Specifier ExtDecList SEMI           { $$ = newnode("ExtDef", UNTERMINAL, 3, @$.first_line, $1, $2, $3); }
-    | Specifier SEMI                    { $$ = newnode("ExtDef", UNTERMINAL, 2, @$.first_line, $1, $2); }
-    | Specifier FunDec CompSt           { $$ = newnode("ExtDef", UNTERMINAL, 3, @$.first_line, $1, $2, $3); }
+    Specifier ExtDecList SEMI           { $$ = newnode("ExtDef", UNTERMINAL, 3, @$.first_line, $1, $2, $3); $$->no = 1;}
+    | Specifier SEMI                    { $$ = newnode("ExtDef", UNTERMINAL, 2, @$.first_line, $1, $2); $$->no = 2;}
+    | Specifier FunDec CompSt           { $$ = newnode("ExtDef", UNTERMINAL, 3, @$.first_line, $1, $2, $3); $$->no = 3;}
     | error SEMI           
     | Specifier error SEMI     
 
     ;
 ExtDecList:
-    VarDec                              { $$ = newnode("ExtDecList", UNTERMINAL, 1, @$.first_line, $1); }
-    | VarDec COMMA ExtDecList           { $$ = newnode("ExtDecList", UNTERMINAL, 3, @$.first_line, $1, $2, $3); }
+    VarDec                              { $$ = newnode("ExtDecList", UNTERMINAL, 1, @$.first_line, $1); $$->no = 1;}
+    | VarDec COMMA ExtDecList           { $$ = newnode("ExtDecList", UNTERMINAL, 3, @$.first_line, $1, $2, $3); $$->no = 2;}
     ;
 
 Specifier:
-    TYPE                                { $$ = newnode("Specifier", UNTERMINAL, 1, @$.first_line, $1); }
-    | StructSpecifier                   { $$ = newnode("Specifier", UNTERMINAL, 1, @$.first_line, $1); }
+    TYPE                                { $$ = newnode("Specifier", UNTERMINAL, 1, @$.first_line, $1); $$->no = 1;}
+    | StructSpecifier                   { $$ = newnode("Specifier", UNTERMINAL, 1, @$.first_line, $1); $$->no = 2;}
     ;
     
 StructSpecifier:
-    STRUCT OptTag LC DefList RC         { $$ = newnode("StructSpecifier", UNTERMINAL, 5, @$.first_line, $1, $2, $3, $4, $5); }
-    | STRUCT Tag                        { $$ = newnode("StructSpecifier", UNTERMINAL, 2, @$.first_line, $1, $2); }
+    STRUCT OptTag LC DefList RC         { $$ = newnode("StructSpecifier", UNTERMINAL, 5, @$.first_line, $1, $2, $3, $4, $5); $$->no = 1;}
+    | STRUCT Tag                        { $$ = newnode("StructSpecifier", UNTERMINAL, 2, @$.first_line, $1, $2); $$->no = 2;}
     | STRUCT OptTag LC error RC
     ;
 OptTag: 
-    ID                                  { $$ = newnode("OptTag", UNTERMINAL, 1, @$.first_line, $1); }
-    |                                   { $$ = newnode("ExtDefList", EPSILON, 0, @$.first_line); }
+    ID                                  { $$ = newnode("OptTag", UNTERMINAL, 1, @$.first_line, $1); $$->no = 1;}
+    |                                   { $$ = newnode("ExtDefList", EPSILON, 0, @$.first_line); $$->no = 2;}
     ;
 Tag:
-    ID                                  {$$ = newnode("Tag", UNTERMINAL, 1, @$.first_line, $1);}
+    ID                                  {$$ = newnode("Tag", UNTERMINAL, 1, @$.first_line, $1); $$->no = 1;}
     ;
 
 VarDec:
-    ID                                  { $$ = newnode("VarDec", UNTERMINAL, 1, @$.first_line, $1); }
-    | VarDec LB INT RB                  { $$ = newnode("VarDec", UNTERMINAL, 4, @$.first_line, $1, $2, $3, $4); }
+    ID                                  { $$ = newnode("VarDec", UNTERMINAL, 1, @$.first_line, $1); $$->no = 1;}
+    | VarDec LB INT RB                  { $$ = newnode("VarDec", UNTERMINAL, 4, @$.first_line, $1, $2, $3, $4); $$->no = 2;}
     | error RB              
     ;
 FunDec:
-    ID LP VarList RP                    { $$ = newnode("FunDec", UNTERMINAL, 4, @$.first_line, $1, $2, $3, $4); }
-    | ID LP RP                          { $$ = newnode("FunDec", UNTERMINAL, 3, @$.first_line, $1, $2, $3); }
+    ID LP VarList RP                    { $$ = newnode("FunDec", UNTERMINAL, 4, @$.first_line, $1, $2, $3, $4); $$->no = 1;}
+    | ID LP RP                          { $$ = newnode("FunDec", UNTERMINAL, 3, @$.first_line, $1, $2, $3); $$->no = 2;}
     | error RP                  
     ;
 VarList:
-    ParamDec COMMA VarList              { $$ = newnode("VarList", UNTERMINAL, 3, @$.first_line, $1, $2, $3); }
-    | ParamDec                          { $$ = newnode("VarList", UNTERMINAL, 1, @$.first_line, $1); }
+    ParamDec COMMA VarList              { $$ = newnode("VarList", UNTERMINAL, 3, @$.first_line, $1, $2, $3); $$->no = 1;}
+    | ParamDec                          { $$ = newnode("VarList", UNTERMINAL, 1, @$.first_line, $1); $$->no = 2;}
     ;
 ParamDec:
-    Specifier VarDec                    { $$ = newnode("ParamDec", UNTERMINAL, 2, @$.first_line, $1, $2); }
+    Specifier VarDec                    { $$ = newnode("ParamDec", UNTERMINAL, 2, @$.first_line, $1, $2); $$->no = 1;}
     ;
 
 CompSt:
-    LC DefList StmtList RC              { $$ = newnode("CompSt", UNTERMINAL, 4, @$.first_line, $1, $2, $3, $4); }
+    LC DefList StmtList RC              { $$ = newnode("CompSt", UNTERMINAL, 4, @$.first_line, $1, $2, $3, $4); $$->no = 1;}
     | error RC          
     | LC error            
     ;
@@ -128,67 +128,67 @@ CompSt:
 
     ;
 StmtList:
-    Stmt StmtList                       { $$ = newnode("StmtList", UNTERMINAL, 2, @$.first_line, $1, $2); }
-    |                                   { $$ = newnode("StmtList", EPSILON, 0, @$.first_line); }
+    Stmt StmtList                       { $$ = newnode("StmtList", UNTERMINAL, 2, @$.first_line, $1, $2); $$->no = 1;}
+    |                                   { $$ = newnode("StmtList", EPSILON, 0, @$.first_line); $$->no = 2;}
     ;
 Stmt: 
-    Exp SEMI                            { $$ = newnode("Stmt", UNTERMINAL, 2, @$.first_line, $1, $2); }
-    | CompSt                            { $$ = newnode("Stmt", UNTERMINAL, 1, @$.first_line, $1); }
-    | RETURN Exp SEMI                   { $$ = newnode("Stmt", UNTERMINAL, 3, @$.first_line, $1, $2, $3); }
-    | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE { $$ = newnode("Stmt", UNTERMINAL, 5, @$.first_line, $1, $2, $3, $4, $5); }
-    | IF LP Exp RP Stmt ELSE Stmt       { $$ = newnode("Stmt", UNTERMINAL, 7, @$.first_line, $1, $2, $3, $4, $5, $6, $7); }
-    | WHILE LP Exp RP Stmt              { $$ = newnode("Stmt", UNTERMINAL, 5, @$.first_line, $1, $2, $3, $4, $5); }
+    Exp SEMI                            { $$ = newnode("Stmt", UNTERMINAL, 2, @$.first_line, $1, $2); $$->no = 1;}
+    | CompSt                            { $$ = newnode("Stmt", UNTERMINAL, 1, @$.first_line, $1); $$->no = 2;}
+    | RETURN Exp SEMI                   { $$ = newnode("Stmt", UNTERMINAL, 3, @$.first_line, $1, $2, $3); $$->no = 3;}
+    | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE { $$ = newnode("Stmt", UNTERMINAL, 5, @$.first_line, $1, $2, $3, $4, $5); $$->no = 4;}
+    | IF LP Exp RP Stmt ELSE Stmt       { $$ = newnode("Stmt", UNTERMINAL, 7, @$.first_line, $1, $2, $3, $4, $5, $6, $7); $$->no = 5;}
+    | WHILE LP Exp RP Stmt              { $$ = newnode("Stmt", UNTERMINAL, 5, @$.first_line, $1, $2, $3, $4, $5); $$->no = 6;}
     | error SEMI   
     | RETURN error SEMI              
     ;
 
 
 DefList:
-    Def DefList                         { $$ = newnode("DefList", UNTERMINAL, 2, @$.first_line, $1, $2);}
-    |                                   { $$ = newnode("DefList", EPSILON, 0, @$.first_line); }
+    Def DefList                         { $$ = newnode("DefList", UNTERMINAL, 2, @$.first_line, $1, $2); $$->no = 1;}
+    |                                   { $$ = newnode("DefList", EPSILON, 0, @$.first_line); $$->no = 2;}
     ; 
 Def: 
-    Specifier DecList SEMI              { $$ = newnode("Def", UNTERMINAL, 3, @$.first_line, $1, $2, $3); }
+    Specifier DecList SEMI              { $$ = newnode("Def", UNTERMINAL, 3, @$.first_line, $1, $2, $3); $$->no = 1;}
     | Specifier error SEMI 
     ;
 
 DecList: 
-    Dec                                 { $$ = newnode("DecList", UNTERMINAL, 1, @$.first_line, $1); }
-    | Dec COMMA DecList                 { $$ = newnode("DecList", UNTERMINAL, 3, @$.first_line, $1, $2, $3); }
+    Dec                                 { $$ = newnode("DecList", UNTERMINAL, 1, @$.first_line, $1); $$->no = 1;}
+    | Dec COMMA DecList                 { $$ = newnode("DecList", UNTERMINAL, 3, @$.first_line, $1, $2, $3); $$->no = 2;}
     ;
 Dec: 
-    VarDec                              { $$ = newnode("Dec", UNTERMINAL, 1, @$.first_line, $1); }
-    | VarDec ASSIGNOP Exp               { $$ = newnode("Dec", UNTERMINAL, 3, @$.first_line, $1, $2, $3); }
+    VarDec                              { $$ = newnode("Dec", UNTERMINAL, 1, @$.first_line, $1); $$->no = 1;}
+    | VarDec ASSIGNOP Exp               { $$ = newnode("Dec", UNTERMINAL, 3, @$.first_line, $1, $2, $3); $$->no = 2;}
     | VarDec ASSIGNOP error
     ;
 
 
 Exp:
-    Exp ASSIGNOP Exp        { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);}
-    | Exp AND Exp           { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);}
-    | Exp OR Exp            { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);}
-    | Exp RELOP Exp         { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);}
-    | Exp PLUS Exp          { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);}
-    | Exp MINUS Exp         { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);}
-    | Exp STAR Exp          { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);}
-    | Exp DIV Exp           { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);}
-    | LP Exp RP             { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);}
-    | MINUS Exp %prec L_MINUS            { $$ = newnode("Exp", UNTERMINAL, 2, @$.first_line, $1, $2);}
-    | NOT Exp               { $$ = newnode("Exp", UNTERMINAL, 2, @$.first_line, $1, $2);}
-    | ID LP Args RP         { $$ = newnode("Exp", UNTERMINAL, 4, @$.first_line, $1, $2, $3, $4);}
-    | ID LP RP              { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);}
-    | Exp LB Exp RB         { $$ = newnode("Exp", UNTERMINAL, 4, @$.first_line, $1, $2, $3, $4);}
-    | Exp DOT ID            { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);}
-    | ID                    { $$ = newnode("Exp", UNTERMINAL, 1, @$.first_line, $1);}
-    | INT                   { $$ = newnode("Exp", UNTERMINAL, 1, @$.first_line, $1);}
-    | FLOAT                 { $$ = newnode("Exp", UNTERMINAL, 1, @$.first_line, $1);}
+    Exp ASSIGNOP Exp        { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);$$->no = 1;}
+    | Exp AND Exp           { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);$$->no = 2;}
+    | Exp OR Exp            { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);$$->no = 3;}
+    | Exp RELOP Exp         { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);$$->no = 4;}
+    | Exp PLUS Exp          { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);$$->no = 5;}
+    | Exp MINUS Exp         { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);$$->no = 6;}
+    | Exp STAR Exp          { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);$$->no = 7;}
+    | Exp DIV Exp           { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);$$->no = 8;}
+    | LP Exp RP             { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);$$->no = 9;}
+    | MINUS Exp %prec L_MINUS            { $$ = newnode("Exp", UNTERMINAL, 2, @$.first_line, $1, $2);$$->no = 10;}
+    | NOT Exp               { $$ = newnode("Exp", UNTERMINAL, 2, @$.first_line, $1, $2);$$->no = 11;}
+    | ID LP Args RP         { $$ = newnode("Exp", UNTERMINAL, 4, @$.first_line, $1, $2, $3, $4);$$->no = 12;}
+    | ID LP RP              { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);$$->no = 13;}
+    | Exp LB Exp RB         { $$ = newnode("Exp", UNTERMINAL, 4, @$.first_line, $1, $2, $3, $4);$$->no = 14;}
+    | Exp DOT ID            { $$ = newnode("Exp", UNTERMINAL, 3, @$.first_line, $1, $2, $3);$$->no = 15;}
+    | ID                    { $$ = newnode("Exp", UNTERMINAL, 1, @$.first_line, $1);$$->no = 16;}
+    | INT                   { $$ = newnode("Exp", UNTERMINAL, 1, @$.first_line, $1);$$->no = 17;}
+    | FLOAT                 { $$ = newnode("Exp", UNTERMINAL, 1, @$.first_line, $1);$$->no = 18;}
     | error RP 
     | error RB
     ;
 
 Args:
-    Exp COMMA Args          { $$ = newnode("Args", UNTERMINAL, 3, @$.first_line, $1, $2, $3);}
-    | Exp                   { $$ = newnode("Args", UNTERMINAL, 1, @$.first_line, $1); }
+    Exp COMMA Args          { $$ = newnode("Args", UNTERMINAL, 3, @$.first_line, $1, $2, $3);$$->no = 1;}
+    | Exp                   { $$ = newnode("Args", UNTERMINAL, 1, @$.first_line, $1); $$->no = 2;}
     ;
 
 
