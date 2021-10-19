@@ -16,7 +16,12 @@ typedef struct SymTabEntry{
     //是否已经被定义
     bool isdefined;
     //一些信息
-    Type *type;
+    Type type;
+
+    //如果是一个函数
+    Type rettype;
+    FP *paratype; 
+
 
     union{
         int valint;
@@ -32,7 +37,7 @@ struct rb_root mytree = RB_ROOT;
 
 
 
-STE *create_entry(bool isFunction, Type *type, struct GTNode *syntaxNode);
+STE *create_entry(bool isFunction, Type type, struct GTNode *syntaxNode);
 
 bool insert_entry(STE* newentry);
 

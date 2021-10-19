@@ -4,7 +4,7 @@
 #include"../syntax.tab.h"
 
 //创建一个表项，返回表项指针
-STE *create_entry(bool isFunction, Type *type, struct GTNode *syntaxNode){
+STE *create_entry(bool isFunction, Type type, struct GTNode *syntaxNode){
     //new一个新表项
     STE *newentry = (STE *)malloc(sizeof(STE));
     memset(newentry, '\0', sizeof(STE));
@@ -13,11 +13,12 @@ STE *create_entry(bool isFunction, Type *type, struct GTNode *syntaxNode){
     strcpy(newentry->name, syntaxNode->val.val_string);
     //表项的类型：函数 or 变量
     newentry->entrytype = isFunction?FUNCTION:VARIABLE;
-    //如果是变量的话还会产生类型
-    newentry->type = type;
+
 
     //基础类型还会有值
     if(!isFunction){
+        //如果是变量的话还会产生类型
+        newentry->type = type;
         if(syntaxNode->type == FLOAT){
             newentry->val.valfloat =  syntaxNode->val.val_float;
         }

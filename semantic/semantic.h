@@ -2,27 +2,67 @@
 #define _SEMANTIC_H_
 
 
-//#include"../include/type.h"
-//#include"../include/syntax.h"
-//#include"../symtab/symtab.h"
-
-
-#define CONCAT(arg0, arg1) arg0 ## arg1
+#include"../include/type.h"
+#include"../include/syntax.h"
+#include"../symtab/symtab.h"
 
 
 //用来自动生成函数
 //Name0代表头为Name的产生式的调度函数
 //语法分析树节点的no域记录产生式标号，通过判断语法分析节点标号来分配到相应的Name-no函数
 //具体见semantic.c
-#define GENF(name,num) \
-    void name##num(struct GTNode *node)
 
+#define GENF(name,num) \
+    SN *name##num(struct GTNode *node)
+
+#define GENF2(name,num) \
+    SN *name##num(struct GTNode *node, SN* r)
+
+typedef struct ParaTypeNode{
+    Type type;
+    PTN *next;
+} PTN;
+
+//符号表里面的函数节点
+typedef struct FunPara{
+    int paranum;
+    PTN *typelist;
+} FP;
+
+#define NEWPTN(typ) \
+    PTN *newptn = (PTN *)malloc(sizeof(PTN)); \
+    newptn->type = typ;\
+    newptn->next = NULL;
+
+
+
+
+
+
+typedef struct SemNode{
+    //如果是变量
+    Type type;    
+    
+    //备用
+    float valfloat;
+    int valint;
+    struct GTNode* node;  
+
+    //分析函数的时候会用到这个field
+    PTN *ptn; 
+
+} SN;
+
+#define PERROR(no,line) \
+    {int a = no;\
+    printf("Error type %d at Line %s", a, line);}
 
 GENF(Program, 0);
 GENF(Program, 1);
 
 GENF(ExtDefList, 0);
 GENF(ExtDefList, 1);
+GENF(ExtDefList, 2);
 
 GENF(ExtDef, 0);
 GENF(ExtDef, 1);
@@ -30,9 +70,11 @@ GENF(ExtDef, 2);
 GENF(ExtDef, 3);
 
 
-GENF(ExtDecList, 0);
-GENF(ExtDecList, 1);
-GENF(ExtDecList, 2);
+GENF2(ExtDecList, 0);
+GENF2(ExtDecList, 1);
+GENF2(ExtDecList, 2);
+
+
 
 GENF(Specifier, 0);
 GENF(Specifier, 1);
@@ -44,22 +86,22 @@ GENF(StructSpecifier, 1);
 GENF(StructSpecifier, 2);
 
 
-GENF(OptTag, 0);
-GENF(OptTag, 1);
-GENF(OptTag, 2);
+GENF2(OptTag, 0);
+GENF2(OptTag, 1);
+GENF2(OptTag, 2);
 
 GENF(Tag, 0);
 GENF(Tag, 1);
 
 
-GENF(VarDec, 0);
-GENF(VarDec, 1);
-GENF(VarDec, 2);
+GENF2(VarDec, 0);
+GENF2(VarDec, 1);
+GENF2(VarDec, 2);
 
 
-GENF(FunDec, 0);
-GENF(FunDec, 1);
-GENF(FunDec, 2);
+GENF2(FunDec, 0);
+GENF2(FunDec, 1);
+GENF2(FunDec, 2);
 
 
 GENF(VarList, 0);

@@ -7,7 +7,7 @@ typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
 
 struct Type_{
-    enum { BASIC, ARRAY, STRUCTURE } kind;
+    enum { BASIC, ARRAY, STRUCTURE, SPECIAL} kind;
     
     union{
         // 基本类型
