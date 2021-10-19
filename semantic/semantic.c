@@ -61,10 +61,12 @@ GENF(ExtDef, 2){
     Specifier0(node);
     return NULL;
 }
-//--------------------
 //声明一个函数
 GENF(ExtDef, 3){
-
+    SN *res = Specifier0(node->children);
+    FunDec0(node->children->next, res);
+    CompSt0(node->children->next->next);
+    return NULL;
 }
 
 
@@ -321,8 +323,13 @@ GENF(CompSt, 0){
     case 1: CompSt1(node);break;
     default: break;
     }
+    return NULL;
 }
-GENF(CompSt, 1){}
+GENF(CompSt, 1){
+    DefList0(node->children);
+    StmtList0(node->children->next);
+    return NULL;
+}
 
 
 
@@ -333,7 +340,14 @@ GENF(StmtList, 0){
     default: break;
     }
 }
-GENF(StmtList, 1){}
+GENF(StmtList, 1){
+    Stmt0(node->children);
+    StmtList0(node->children->next);
+    return NULL;
+}
+GENF(StmtList, 2){
+    return NULL;
+}
 
 
 
@@ -341,15 +355,42 @@ GENF(Stmt, 0){
     switch (node->no)
     {
     case 1: Stmt1(node);break;
+    case 2: Stmt2(node);break;
+    case 3: Stmt3(node);break;
+    case 4: Stmt4(node);break;
+    case 5: Stmt5(node);break;
+    case 6: Stmt6(node);break;
     default: break;
     }
 }
-GENF(Stmt, 1){}
-GENF(Stmt, 2){}
-GENF(Stmt, 3){}
-GENF(Stmt, 4){}
-GENF(Stmt, 5){}
-GENF(Stmt, 6){}
+GENF(Stmt, 1){
+    Exp0(node->children);
+    return NULL;
+}
+GENF(Stmt, 2){
+    CompSt0(node->children);
+    return NULL;
+}
+GENF(Stmt, 3){
+    Exp0(node->children->next);
+    return NULL;
+}
+GENF(Stmt, 4){
+    Exp0(node->children->next);
+    Stmt0(node->children->next->next->next->next);
+    return NULL;
+}
+GENF(Stmt, 5){
+    Exp0(node->children->next);
+    Stmt0(node->children->next->next->next->next);
+    Stmt0(node->children->next->next->next->next->next->next);
+    return NULL;
+}
+GENF(Stmt, 6){
+    Exp0(node->children->next->next);
+    Stmt0(node->children->next->next->next->next);
+    return NULL;
+}
 
 
 
@@ -361,8 +402,14 @@ GENF(DefList, 0){
     default: break;
     }
 }
-GENF(DefList, 1){}
-GENF(DefList, 2){}
+GENF(DefList, 1){
+    Def0(node->children);
+    DefList0(node->children->next);
+    return NULL;
+}
+GENF(DefList, 2){
+    return NULL;
+}
 
 
 
@@ -373,7 +420,9 @@ GENF(Def, 0){
     default: break;
     }
 }
-GENF(Def, 1){}
+GENF(Def, 1){
+
+}
 
 
 
@@ -429,7 +478,17 @@ GENF(Exp, 0){
     }
     return res;
 }
-GENF(Exp, 1){}
+GENF(Exp, 1){
+    SN *res1, *res2;
+    res1 = Exp0(node->children);
+    res2 = Exp0(node->children->next);
+    bool res;
+    res = compare_type(res1->type, res2->type);
+    if(!res){
+        //赋值左右两边类型不匹配
+    }
+    return res1;
+}
 GENF(Exp, 2){}
 GENF(Exp, 3){}
 GENF(Exp, 4){}

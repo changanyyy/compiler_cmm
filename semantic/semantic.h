@@ -116,6 +116,7 @@ GENF(CompSt, 1);
 
 GENF(StmtList, 0);
 GENF(StmtList, 1);
+GENF(StmtList, 2);
 
 
 GENF(Stmt, 0);

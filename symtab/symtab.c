@@ -45,3 +45,39 @@ STE* search_entry(const char *name){
 bool remove_entry(const char *name){
     return my_rbtree_remove(&mytree, name);
 }
+
+bool compare_struct_field(FieldList lhs, FieldList rhs){
+    if(!lhs || !rhs)
+        return false;
+    bool res;
+    res = compare_type(lhs->type, rhs->type);
+    if(!res)
+        return false;
+    
+    return compare_struct_field(lhs->tail, rhs->tail);
+    
+}
+
+
+ bool compare_type(Type lhs, Type rhs){
+    if(lhs==NULL || rhs==NULL)
+        return false;
+    if(lhs->kind != rhs->kind)
+        return false;
+    if(lhs->kind == BASIC){
+        return lhs->u.basic == rhs->u.basic;
+    }
+    else if(lhs->kind == ARRAY){
+        if(lhs->u.array.size != rhs->u.array.size)
+            return false;
+        return compare_type(lhs->u.array.elem, rhs->u.array.elem);
+    }
+    else if(lhs->kind == STRUCT){
+        return compare_struct_field(lhs->u.structure, rhs->u.structure);
+    }
+    else {
+        printf("ERROR in compare_type");
+        exit(-1);
+    }
+    
+ }

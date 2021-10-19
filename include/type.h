@@ -1,6 +1,7 @@
 #ifndef _TYPE_H_
 #define _TYPE_H_
 
+#include<stdbool.h>
 
 
 typedef struct Type_* Type;
@@ -26,6 +27,8 @@ struct FieldList_
     FieldList tail; // 下一个域
 };
 
+
+bool compare_type(Type lhs, Type rhs);
 
 
 #endif
