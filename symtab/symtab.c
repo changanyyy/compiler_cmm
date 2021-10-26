@@ -36,7 +36,7 @@ bool insert_entry(STE* newentry){
     my_rbtree_insert(&mytree, newentry);
 }
 
-//
+//搜索表项
 STE* search_entry(const char *name){
     return my_rbtree_search(&mytree, name);
 }
@@ -45,6 +45,13 @@ STE* search_entry(const char *name){
 bool remove_entry(const char *name){
     return my_rbtree_remove(&mytree, name);
 }
+
+
+
+
+
+//下面函数用来比较类型
+
 
 bool compare_struct_field(FieldList lhs, FieldList rhs){
     if(!lhs || !rhs)

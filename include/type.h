@@ -3,6 +3,9 @@
 
 #include<stdbool.h>
 
+/*
+*定义了类型相关的结构和比较类型的方法
+*/
 
 typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
@@ -28,6 +31,7 @@ struct FieldList_
 };
 
 
+//比较类型是否相同，递归比较
 bool compare_type(Type lhs, Type rhs);
 
 

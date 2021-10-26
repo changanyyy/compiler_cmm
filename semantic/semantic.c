@@ -481,7 +481,7 @@ GENF(Exp, 0){
 GENF(Exp, 1){
     SN *res1, *res2;
     res1 = Exp0(node->children);
-    res2 = Exp0(node->children->next);
+    res2 = Exp0(node->children->next->next);
     bool res;
     res = compare_type(res1->type, res2->type);
     if(!res){
@@ -489,20 +489,223 @@ GENF(Exp, 1){
     }
     return res1;
 }
-GENF(Exp, 2){}
-GENF(Exp, 3){}
-GENF(Exp, 4){}
-GENF(Exp, 5){}
-GENF(Exp, 6){}
-GENF(Exp, 7){}
-GENF(Exp, 8){}
-GENF(Exp, 9){}
-GENF(Exp, 10){}
-GENF(Exp, 11){}
-GENF(Exp, 12){}
-GENF(Exp, 13){}
-GENF(Exp, 14){}
-GENF(Exp, 15){}
+GENF(Exp, 2){
+    SN *res1, *res2;
+    res1 = Exp0(node->children);
+    res2 = Exp0(node->children->next->next);
+    if(res1->type->kind!=BASIC || res1->type->u.basic!=INT
+        || res2->type->kind!=BASIC || res2->type->u.basic!=INT)
+        {
+            //类型不匹配，只允许两个int进行逻辑运算
+
+    }
+    
+    return res1;
+}
+GENF(Exp, 3){
+    SN *res1, *res2;
+    res1 = Exp0(node->children);
+    res2 = Exp0(node->children->next->next);
+    if(res1->type->kind!=BASIC || res1->type->u.basic!=INT
+        || res2->type->kind!=BASIC || res2->type->u.basic!=INT)
+        {
+            //类型不匹配，只允许两个int进行逻辑运算
+
+    }
+    
+    return res1;
+}
+GENF(Exp, 4){
+    SN *res1, *res2;
+    res1 = Exp0(node->children);
+    res2 = Exp0(node->children->next->next);
+    if(res1->type->kind!=BASIC || res2->type->kind!=BASIC){
+        //不是基本类型，不能关系运算
+    }
+    
+    bool res;
+    res = compare_type(res1->type, res2->type);
+    if(!res){
+        //赋值左右两边类型不匹配
+    }
+    return res1;
+}
+GENF(Exp, 5){
+    SN *res1, *res2;
+    res1 = Exp0(node->children);
+    res2 = Exp0(node->children->next->next);
+    if(res1->type->kind!=BASIC || res2->type->kind!=BASIC){
+        //不是基本类型，不能关系运算
+    }
+    
+    bool res;
+    res = compare_type(res1->type, res2->type);
+    if(!res){
+        //赋值左右两边类型不匹配
+    }
+    return res1;
+}
+GENF(Exp, 6){
+    SN *res1, *res2;
+    res1 = Exp0(node->children);
+    res2 = Exp0(node->children->next->next);
+    if(res1->type->kind!=BASIC || res2->type->kind!=BASIC){
+        //不是基本类型，不能关系运算
+    }
+    
+    bool res;
+    res = compare_type(res1->type, res2->type);
+    if(!res){
+        //赋值左右两边类型不匹配
+    }
+    return res1;
+}
+GENF(Exp, 7){
+    SN *res1, *res2;
+    res1 = Exp0(node->children);
+    res2 = Exp0(node->children->next->next);
+    if(res1->type->kind!=BASIC || res2->type->kind!=BASIC){
+        //不是基本类型，不能关系运算
+    }
+    
+    bool res;
+    res = compare_type(res1->type, res2->type);
+    if(!res){
+        //赋值左右两边类型不匹配
+    }
+    return res1;
+}
+GENF(Exp, 8){
+    SN *res1, *res2;
+    res1 = Exp0(node->children);
+    res2 = Exp0(node->children->next->next);
+    if(res1->type->kind!=BASIC || res2->type->kind!=BASIC){
+        //不是基本类型，不能关系运算
+    }
+    
+    bool res;
+    res = compare_type(res1->type, res2->type);
+    if(!res){
+        //赋值左右两边类型不匹配
+    }
+    return res1;    
+}
+GENF(Exp, 9){
+    SN *res;
+    res = Exp0(node->children->next);
+
+    return res;
+}
+GENF(Exp, 10){
+    SN *res;
+    res = Exp0(node->children->next);
+
+    if(res->type->kind != BASIC){
+
+    }
+
+    return res;
+}
+GENF(Exp, 11){
+    SN *res;
+    res = Exp0(node->children->next);
+
+    if(res->type->kind != BASIC || res->type->u.basic != INT){
+
+    }
+
+    return res;
+}
+
+
+//比较参数是否相同，相同就返回true，不同返回false
+bool compare_parameter(PTN *lhs, PTN *rhs){
+    if(!lhs && !rhs)
+        return true;
+    if((lhs && !rhs) || (!lhs && rhs))
+        return false;
+    if(!compare_type(lhs->type, rhs->type))
+        return false;
+    //递归检查
+    return compare_parameter(lhs->next,rhs->next);
+}
+
+
+GENF(Exp, 12){
+    STE * ste = search_entry(node->children->val.val_string);
+    if(!ste){
+        //使用了未定义的
+    }
+    if(ste->entrytype != FUNCTION){
+        //
+    }
+
+    SN *res1 = Args0(node->children->next->next);
+    if(!compare_parameter(ste->paratype, res1->ptn)){
+        //参数不匹配
+    }
+
+
+    SN* res = (SN *)malloc(sizeof(SN));
+    res->type = ste->rettype;
+    
+    return res;    
+
+}
+GENF(Exp, 13){
+    STE *res = search_entry(node->children->val.val_string);
+    if(res->entrytype != FUNCTION){
+        //不是函数
+    
+    }
+    if(res->paratype->typelist != NULL){
+        //参数不匹配
+    }
+
+    return NULL;
+}
+//访问数组
+GENF(Exp, 14){
+    SN *res1 = Exp0(node->children);
+    SN *res2 = Exp0(node->children->next->next);
+
+    if(res2->type->kind != BASIC || res2->type->u.basic != INT){
+        //不一样
+    }
+
+    if(res1->type->kind!=ARRAY){
+        //不是数组
+    }
+
+
+
+
+
+}
+
+FieldList search_member(FieldList fl, const char *name){
+    if(!fl)
+        return NULL;
+    if(!strcmp(fl->name, name))
+        return fl;
+    else    
+        return search_member(fl->tail, name);
+}
+//访问结构体
+GENF(Exp, 15){
+    SN *res = Exp0(node->children->next->next);
+    if( res->type->kind != STRUCTURE){
+
+    }
+    FieldList res1 = search_member(res->type->u.structure, node->children->next->next->val.val_string);
+    if(!res1){
+        //没有这个成员
+    }
+    res = malloc(sizeof(SN));
+    res -> type = res1->type;
+    return res;
+
+}
 GENF(Exp, 16){
     STE *ste = search_entry(node->children->name);
     if(!ste)
@@ -511,6 +714,7 @@ GENF(Exp, 16){
     res->type = malloc(sizeof(struct Type_));
     res->type->kind = ste->type->kind;
     res->type->u = ste->type->u;
+    res->valint = 0;
     return res;
 }
 GENF(Exp, 17){
@@ -530,5 +734,39 @@ GENF(Exp, 18){
     return res;
 }
 
-GENF(Args, 0){}
-GENF(Args, 1){}
+
+
+
+//函数调用参数列表
+GENF(Args, 0){
+    SN *res;
+    switch(node->no){
+    case 1: res = Args1(node); break;
+    default: break;
+    }
+
+    return res;
+}
+GENF(Args, 1){
+    //获得Exp的类型
+    SN *res1 = Exp0(node->children);
+    //获得预期参数列表
+    SN *res2 = Args0(node->children->next->next);
+    
+    //在链表头接入类型
+    NEWPTN(res1->type);
+    newptn->next = res2->ptn;
+    //重复利用res2进行返回
+    res2->ptn = newptn;
+    return res2;
+}
+GENF(Args, 2){
+    //参数链表尾
+    SN *res;
+    res = Exp0(node->children);
+
+    NEWPTN(res->type);
+    res->ptn = newptn;
+
+    return res;
+}

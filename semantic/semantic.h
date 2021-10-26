@@ -12,15 +12,21 @@
 //语法分析树节点的no域记录产生式标号，通过判断语法分析节点标号来分配到相应的Name-no函数
 //具体见semantic.c
 
+
+//生成一个语义分析函数（综合属性）
 #define GENF(name,num) \
     SN *name##num(struct GTNode *node)
 
+//生成一个语义分析函数（包含继承属性）
 #define GENF2(name,num) \
     SN *name##num(struct GTNode *node, SN* r)
 
+
+
+//参数节点，用来表示参数类型
 typedef struct ParaTypeNode{
     Type type;
-    PTN *next;
+    struct ParaTypeNode *next;
 } PTN;
 
 //符号表里面的函数节点
@@ -29,16 +35,15 @@ typedef struct FunPara{
     PTN *typelist;
 } FP;
 
+//创建新的参数类型节点
 #define NEWPTN(typ) \
     PTN *newptn = (PTN *)malloc(sizeof(PTN)); \
     newptn->type = typ;\
     newptn->next = NULL;
 
 
-
-
-
-
+//下面是辅助结构
+//里面传递了综合属性或继承属性
 typedef struct SemNode{
     //如果是变量
     Type type;    
@@ -48,10 +53,13 @@ typedef struct SemNode{
     int valint;
     struct GTNode* node;  
 
+
+    //传递参数链表
     //分析函数的时候会用到这个field
     PTN *ptn; 
 
 } SN;
+
 
 #define PERROR(no,line) \
     {int a = no;\
@@ -168,25 +176,7 @@ GENF(Exp, 18);
 
 GENF(Args, 0);
 GENF(Args, 1);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+GENF(Args, 2);
 
 
 
