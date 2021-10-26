@@ -53,6 +53,7 @@ typedef struct SemNode{
     int valint;
     struct GTNode* node;  
 
+    FieldList fl;
 
     //传递参数链表
     //分析函数的时候会用到这个field
@@ -145,13 +146,13 @@ GENF(Def, 0);
 GENF(Def, 1);
 
 
-GENF(DecList, 0);
-GENF(DecList, 1);
-GENF(DecList, 2);
+GENF2(DecList, 0);
+GENF2(DecList, 1);
+GENF2(DecList, 2);
 
-GENF(Dec, 0);
-GENF(Dec, 1);
-GENF(Dec, 2);
+GENF2(Dec, 0);
+GENF2(Dec, 1);
+GENF2(Dec, 2);
 
 
 GENF(Exp, 0);

@@ -4,22 +4,23 @@
 #include"../syntax.tab.h"
 
 
-//分配函数
+//代表整个程序，只有一个产生式
 GENF(Program, 0){
-    SN *res;
     switch (node->no)
     {
-    case 1: res = Program1(node);break;
+    case 1: Program1(node);break;
     default: break;
     }
-    return res;
+    return NULL;
 }
-//具体处理函数
 GENF(Program, 1){
     ExtDefList0(node->children);
     return NULL;
 }
 
+
+
+//外部定义列表
 GENF(ExtDefList, 0){
     switch (node->no)
     {
@@ -39,6 +40,7 @@ GENF(ExtDefList, 2){
 }
 
 
+
 GENF(ExtDef, 0){
     switch(node->no)
     {
@@ -51,14 +53,14 @@ GENF(ExtDef, 0){
 }
 //声明一个变量
 GENF(ExtDef, 1){
-    SN *res1;
-    res1 = Specifier0(node->children);
-    ExtDecList0(node->children->next, res1);
+    SN *res;
+    res = Specifier0(node->children);
+    ExtDecList0(node->children->next, res);
     return NULL;
 }
 //有可能声明一个结构
 GENF(ExtDef, 2){
-    Specifier0(node);
+    Specifier0(node->children);
     return NULL;
 }
 //声明一个函数
@@ -90,7 +92,7 @@ GENF2(ExtDecList,2){
 }
 
 
-
+//返回类型，通过res->type表示
 GENF(Specifier, 0){
     SN *res;
     switch (node->no)
@@ -101,15 +103,22 @@ GENF(Specifier, 0){
     }    
     return res;
 }
+//返回基础类型
 GENF(Specifier, 1){
     Type t = malloc(sizeof(struct Type_));
     t->kind = BASIC;
     //枚举定义在syntax.tab.h里
-    t->u.basic = node->children->type;
+    if(!strcmp(node->children->val.val_string, "int"))
+        t->u.basic = INT;
+    else
+        t->u.basic = FLOAT;
+    
+    //把TYPE代表的类型通过res传出去
     SN *res = (SN *)malloc(sizeof(SN));
     res->type = t;
     return res;
 }
+//返回结构体类型
 GENF(Specifier, 2){
     SN *res;
     res = StructSpecifier0(node->children);
@@ -117,24 +126,30 @@ GENF(Specifier, 2){
 }
 
 
-
+//返回结构体类型
 GENF(StructSpecifier, 0){
+    SN *res;
     switch (node->no)
     {
-    case 1: StructSpecifier1(node);break;
-    case 2: StructSpecifier2(node);break;
+    case 1: res = StructSpecifier1(node);break;
+    case 2: res = StructSpecifier2(node);break;
     default: break;
     }
-}
-GENF(StructSpecifier, 1){
-    SN *res;
-    res = DefList0(node);
-    res = OptTag0(node->children->next, res);
     return res;
 }
+//定义一个新的结构体，返回结构体类型
+GENF(StructSpecifier, 1){
+    SN *res;
+    res = DefList0(node->next->next->next);
+    //下面把结构体成员列表通过res传入OptTag
+    res = OptTag0(node->children->next, res);
+    //返回的type是结构体
+    return res;
+}
+//使用已经定义过的结构体，返回结构体类型
 GENF(StructSpecifier, 2){
     SN *res = Tag0(node->children->next);
-    STE *ste = search_entry(res->node->name);
+    STE *ste = search_entry(res->node->val.val_string);
     if(ste == NULL){
         //使用了未定义的结构体
     }
@@ -145,7 +160,7 @@ GENF(StructSpecifier, 2){
 }
 
 
-
+//一个可选结构体名称，返回的是结构体类型
 GENF2(OptTag, 0){
     SN *res;
     switch (node->no)
@@ -159,9 +174,13 @@ GENF2(OptTag, 0){
 //在这里我把结构体直接当成一个符号表的表项来处理，也就是说变量不可以重名
 GENF2(OptTag, 1){
     Type t = malloc(sizeof(struct Type_));
-    t->kind = STRUCT;
-    t->u.structure = r->type;
+    t->kind = STRUCTURE;
+    //通过前面deflist得到的fl链表
+    t->u.structure = r->fl;
+    //创建表项
     create_entry(false, t, node->children);
+    
+    //把结构体类型返回
     SN *res = (SN *)malloc(sizeof(SN));
     res->type = t;
     return res;
@@ -169,8 +188,8 @@ GENF2(OptTag, 1){
 //匿名结构体，不必把这个结构类型存起来，但是要返回这个类型给后面变量用
 GENF2(OptTag, 2){
     Type t = malloc(sizeof(struct Type_));
-    t->kind = STRUCT;
-    t->u.structure = r->type;
+    t->kind = STRUCTURE;
+    t->u.structure = r->fl;
     SN *res = (SN *)malloc(sizeof(SN));
     res->type = t;
     return res;
@@ -395,17 +414,27 @@ GENF(Stmt, 6){
 
 
 GENF(DefList, 0){
+    SN *res;
     switch (node->no)
     {
-    case 1: DefList1(node);break;
-    case 2: DefList2(node);break;
+    case 1: res = DefList1(node);break;
+    case 2: res = DefList2(node);break;
     default: break;
     }
 }
 GENF(DefList, 1){
-    Def0(node->children);
-    DefList0(node->children->next);
-    return NULL;
+    SN *res1,*res2;
+    res1 = Def0(node->children);
+    res2 = DefList0(node->children->next);
+    if(res2){
+        //如果下一个定义列表不是空，那就接到def的fl末尾
+        FieldList fl = res1->fl;
+        while(fl->tail)
+            fl = fl->tail;
+        fl->tail = res2->fl;
+    }
+    //直接返回接好的链表头
+    return res1;
 }
 GENF(DefList, 2){
     return NULL;
@@ -414,41 +443,94 @@ GENF(DefList, 2){
 
 
 GENF(Def, 0){
+    SN* res;
     switch (node->no)
     {
-    case 1: Def1(node);break;
+    case 1: res = Def1(node);break;
     default: break;
     }
+    return res;
 }
 GENF(Def, 1){
-
+    SN *res;
+    res = Specifier0(node->children);
+    res = DecList0(node->children->next, res);
+    //传回declist的fl链表
+    return res;
 }
 
 
 
-GENF(DecList, 0){
+GENF2(DecList, 0){
+    SN *res;
     switch (node->no)
     {
-    case 1: DecList1(node);break;
-    case 2: DecList2(node);break;
+    case 1: res = DecList1(node, r); break;
+    case 2: res = DecList2(node, r); break;
     default: break;
     }
+    return res;
 }
-GENF(DecList, 1){}
-GENF(DecList, 2){}
+GENF2(DecList, 1){
+    SN *res;
+    //获取Dec的类型
+    res = Dec0(node->children, r);
+
+    FieldList fl = malloc(sizeof(struct FieldList_));
+    strcpy(fl->name,res->node->val.val_string);
+    fl->type = res->type;
+    fl->tail = NULL;
+    
+    //把FieldList传回去
+    res->fl = fl;
+    return res;
+
+}
+GENF2(DecList, 2){
+    SN *res1, *res2;
+    //获取Dec的类型和名字
+    res1 = Dec0(node->children, r);
+    //获得declist的fl链表，传入r里面有类型
+    res2 = DecList0(node->children->next, r);
+
+    FieldList fl = malloc(sizeof(struct FieldList_));
+    strcpy(fl->name,res1->node->val.val_string);
+    fl->type = res1->type;
+    fl->tail = res2->fl;
+
+    //把构造好的新fl列表传回去
+    res2->fl = fl;
+    return res2;
+
+}
 
 
 
-GENF(Dec, 0){
+GENF2(Dec, 0){
+    SN *res;
     switch (node->no)
     {
-    case 1: Dec1(node);break;
-    case 2: Dec2(node);break;
+    case 1: res = Dec1(node, r);break;
+    case 2: res = Dec2(node, r);break;
     default: break;
     }
+    return res;
 }
-GENF(Dec, 1){}
-GENF(Dec, 2){}
+GENF2(Dec, 1){
+    SN *res1;
+    res1 = VarDec0(node->children, r);
+    return res;
+
+}
+GENF2(Dec, 2){
+    SN *res1, *res2;
+    res1 = VarDec0(node->children, r);
+    res2 = Exp0(node->children->next->next);
+    if(!compare_type(res1->type, res2->type)){
+        //赋值号两边类型不同
+    }
+    return res1;
+}
 
 
 
