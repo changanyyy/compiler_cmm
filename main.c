@@ -1,9 +1,10 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include"include/syntax.h"
-#include"assert.h"
-#include"syntax.tab.h"
-
+#include<assert.h>
+#include"./include/syntax.h"
+#include"./syntax.tab.h"
+#include"semantic/semantic.h"
+#include"symtab/symtab.h"
 
 void yyrestart(FILE *);
 
@@ -27,13 +28,17 @@ int main(int argc, char** argv){
     //restart in file f
     yyrestart(f);
 
-    //printf("Start parsing\n");
+    
 
     //parse grammer
     yyparse();
     assert(root->children);
     assert(!(root->next));
-    print_tree(root, 0);
+    //print_tree(root, 0);
+
+    
+    Program0(root);
+    
 
     return 0;
 }

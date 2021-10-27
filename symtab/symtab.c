@@ -3,6 +3,8 @@
 #include"../include/syntax.h"
 #include"../syntax.tab.h"
 
+
+
 //创建一个表项，返回表项指针
 STE *create_entry(bool isFunction, Type type, struct GTNode *syntaxNode){
     //new一个新表项
@@ -26,10 +28,13 @@ STE *create_entry(bool isFunction, Type type, struct GTNode *syntaxNode){
             newentry->val.valint = syntaxNode->val.val_int;
         }
     }
+    insert_entry(newentry);
 
     return newentry;
 }
 
+//初始化红黑树根节点
+struct rb_root mytree = RB_ROOT;
 
 //插入表项
 bool insert_entry(STE* newentry){
@@ -37,12 +42,12 @@ bool insert_entry(STE* newentry){
 }
 
 //搜索表项
-STE* search_entry(const char *name){
+STE* search_entry(char *name){
     return my_rbtree_search(&mytree, name);
 }
 
 //删除表项
-bool remove_entry(const char *name){
+bool remove_entry(char *name){
     return my_rbtree_remove(&mytree, name);
 }
 

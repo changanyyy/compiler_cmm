@@ -25,7 +25,7 @@ struct Type_{
 
 struct FieldList_
 {
-    char* name; // 域的名字
+    char name[50]; // 域的名字
     Type type; // 域的类型 
     FieldList tail; // 下一个域
 };

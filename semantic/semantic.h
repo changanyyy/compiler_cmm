@@ -54,6 +54,7 @@ typedef struct SemNode{
     struct GTNode* node;  
 
     int store;
+    int assigned;
 
     FieldList fl;
 
@@ -64,9 +65,9 @@ typedef struct SemNode{
 } SN;
 
 
-#define PERROR(no,line) \
-    {int a = no;\
-    printf("Error type %d at Line %s", a, line);}
+
+
+
 
 GENF(Program, 0);
 GENF(Program, 1);

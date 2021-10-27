@@ -1,13 +1,13 @@
 #include"tree_operation.h"
 #include<stdlib.h>
 
-STE *my_rbtree_search(struct rb_root *root, char *s){
+struct SymTabEntry *my_rbtree_search(struct rb_root *root, char *s){
     struct rb_node *node = root->rb_node;
 	int res = 0;
     while (node != NULL)
 	{
 		//找到包含这个node节点（根节点）的STE（symbol table entry）
-		STE *data = container_of(node, STE, node);
+		struct SymTabEntry *data = container_of(node, struct SymTabEntry, node);
 		
 		//对名字进行比较，平衡二叉树经典操作
 		res = strcmp(s, data->name);
@@ -22,7 +22,7 @@ STE *my_rbtree_search(struct rb_root *root, char *s){
 }
 
 
-bool my_rbtree_insert(struct rb_root *root, STE *data)
+bool my_rbtree_insert(struct rb_root *root, struct SymTabEntry *data)
 {
 	struct rb_node **new = &(root->rb_node), *parent = NULL;
     int res;
@@ -32,7 +32,7 @@ bool my_rbtree_insert(struct rb_root *root, STE *data)
 	//因为*new可能是NULL，所以用二级指针
 	while (*new)
 	{
-		STE *this = container_of(*new, STE, node);
+		struct SymTabEntry *this = container_of(*new, struct SymTabEntry, node);
         
 		res = strcmp(data->name, this->name);
 
@@ -59,7 +59,7 @@ bool my_rbtree_insert(struct rb_root *root, STE *data)
 }
 
 bool my_rbtree_remove(struct rb_root *root, char* s){
-	STE *data = my_rbtree_search(root, s);
+	struct SymTabEntry *data = my_rbtree_search(root, s);
 	if (data != NULL)
 	{
 		rb_erase(&data->node, root);

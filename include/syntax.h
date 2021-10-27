@@ -1,5 +1,5 @@
-#ifndef _SYNTAX_H_
-#define _SYNTAX_H_
+#ifndef _SYNTAXX_H_
+#define _SYNTAXX_H_
 
 /*
 * 语法相关的结构
