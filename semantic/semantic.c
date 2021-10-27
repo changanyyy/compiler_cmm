@@ -55,6 +55,7 @@ GENF(ExtDef, 0){
 GENF(ExtDef, 1){
     SN *res;
     res = Specifier0(node->children);
+    //具体类型已经通过res传递
     ExtDecList0(node->children->next, res);
     return NULL;
 }
@@ -72,7 +73,7 @@ GENF(ExtDef, 3){
 }
 
 
-
+//外部声明列表
 GENF2(ExtDecList,0){
     switch (node->no)
     {
@@ -80,6 +81,7 @@ GENF2(ExtDecList,0){
     case 2: ExtDecList2(node, r);break;
     default: break;
     }
+    return NULL;
 }
 GENF2(ExtDecList,1){
     VarDec0(node->children, r);
@@ -87,7 +89,7 @@ GENF2(ExtDecList,1){
 }
 GENF2(ExtDecList,2){
     VarDec0(node->children, r);
-    ExtDecList0(node->children->next, r);
+    ExtDecList0(node->children->next->next, r);
     return NULL;
 }
 
@@ -228,7 +230,15 @@ GENF2(VarDec, 0){
 GENF2(VarDec, 1){
     //类型从右往左一层层构造，通过r来传递
     //遇到ID说明结束传递，可以创建符号表项
-    create_entry(false, r->type, node->children);
+    
+    //如果是结构体解析触发这个产生式，那么r->store=100
+    //这时不需要把变量存在表里面
+    //如果通过外部声明触发的话，需要存在符号表里
+    if(r->store!=100){
+        create_entry(false, r->type, node->children);
+    }
+    //由于结构体需要构造FieldList，需要id名字
+    r->node = node;
     return r;
 }
 //当是一个数组的话
@@ -258,21 +268,31 @@ GENF2(FunDec, 0){
     case 2: FunDec2(node, r);break;
     default: break;
     }
+    return NULL;
 }
 GENF2(FunDec, 1){
+    //创建符号表项，是函数
     STE *ste = create_entry(true, NULL, node->children);
+    //返回值类型
     ste->rettype = r->type;
-    //TODO
+    
+    //获得参数类型列表
     SN *res;
     res = VarList0(node->children->next->next);
 
-    ste->paratype = malloc(sizeof(FP));
+    //存函数参数
+    ste->paratype = (FP *)malloc(sizeof(FP));
     ste->paratype->paranum = res->valint;
     ste->paratype->typelist = res->ptn;
+    return NULL;
 }
 GENF2(FunDec, 2){
+    //创建符号表项，函数
     STE *ste = create_entry(true, NULL, node->children);
+    //返回值类型
     ste->rettype = r->type;
+    
+    //存函数参数
     ste->paratype = (FP *)malloc(sizeof(FP));
     ste->paratype->paranum = 0;
     ste->paratype->typelist = NULL;
@@ -282,12 +302,14 @@ GENF2(FunDec, 2){
 
 
 GENF(VarList, 0){
+    SN *res;
     switch (node->no)
     {
-    case 1: VarList1(node);break;
-    case 2: VarList2(node);break;
+    case 1: res = VarList1(node);break;
+    case 2: res = VarList2(node);break;
     default: break;
     }
+    return res;
 }
 GENF(VarList, 1){
     SN *res1, *res2;
@@ -330,6 +352,9 @@ GENF(ParamDec, 0){
 GENF(ParamDec, 1){
     SN *res;
     res = Specifier0(node->children);
+
+    //函数参数列表 不需要存在符号表
+    res->store = 100;
     res = VarDec0(node->children->next, res);
     return res;
 }
@@ -345,8 +370,8 @@ GENF(CompSt, 0){
     return NULL;
 }
 GENF(CompSt, 1){
-    DefList0(node->children);
-    StmtList0(node->children->next);
+    DefList0(node->children->next);
+    StmtList0(node->children->next->next);
     return NULL;
 }
 
@@ -358,6 +383,7 @@ GENF(StmtList, 0){
     case 1: StmtList1(node);break;
     default: break;
     }
+    return NULL;
 }
 GENF(StmtList, 1){
     Stmt0(node->children);
@@ -381,6 +407,7 @@ GENF(Stmt, 0){
     case 6: Stmt6(node);break;
     default: break;
     }
+    return NULL;
 }
 GENF(Stmt, 1){
     Exp0(node->children);
@@ -395,12 +422,12 @@ GENF(Stmt, 3){
     return NULL;
 }
 GENF(Stmt, 4){
-    Exp0(node->children->next);
+    Exp0(node->children->next->next);
     Stmt0(node->children->next->next->next->next);
     return NULL;
 }
 GENF(Stmt, 5){
-    Exp0(node->children->next);
+    Exp0(node->children->next->next);
     Stmt0(node->children->next->next->next->next);
     Stmt0(node->children->next->next->next->next->next->next);
     return NULL;
@@ -518,12 +545,16 @@ GENF2(Dec, 0){
 }
 GENF2(Dec, 1){
     SN *res1;
+    r->store = 100;
     res1 = VarDec0(node->children, r);
     return res;
 
 }
 GENF2(Dec, 2){
     SN *res1, *res2;
+
+    r->store = 100;
+
     res1 = VarDec0(node->children, r);
     res2 = Exp0(node->children->next->next);
     if(!compare_type(res1->type, res2->type)){

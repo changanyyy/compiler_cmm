@@ -53,6 +53,8 @@ typedef struct SemNode{
     int valint;
     struct GTNode* node;  
 
+    int store;
+
     FieldList fl;
 
     //传递参数链表
