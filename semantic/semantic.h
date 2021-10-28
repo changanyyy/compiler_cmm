@@ -26,6 +26,7 @@
 //参数节点，用来表示参数类型
 typedef struct ParaTypeNode{
     Type type;
+    char name[20];
     struct ParaTypeNode *next;
 } PTN;
 

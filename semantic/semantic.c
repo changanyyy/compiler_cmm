@@ -4,6 +4,11 @@
 #include"../syntax.tab.h"
 
 
+//当前处理的函数
+STE *cur_func;
+bool deal_struct;
+
+
 void print_error(int number, int lline){
     printf("Error type %d at Line %d\n", number, lline);
     return;
@@ -13,6 +18,8 @@ void print_error(int number, int lline){
 
 //代表整个程序，只有一个产生式
 GENF(Program, 0){
+    cur_func = NULL;
+    deal_struct = false;
     switch (node->no)
     {
     case 1: Program1(node);break;
@@ -38,8 +45,9 @@ GENF(ExtDefList, 0){
     return NULL;
 }
 GENF(ExtDefList, 1){
-    
+
     ExtDef0(node->children);
+    
     ExtDefList0(node->children->next);
     return NULL;
 }
@@ -61,8 +69,10 @@ GENF(ExtDef, 0){
 }
 //声明一个变量
 GENF(ExtDef, 1){
+    //printf("123\n");
     SN *res;
     res = Specifier0(node->children);
+    
     //具体类型已经通过res传递
     if(!res)
         return NULL;
@@ -71,7 +81,9 @@ GENF(ExtDef, 1){
 }
 //有可能声明一个结构
 GENF(ExtDef, 2){
+    
     Specifier0(node->children);
+
     return NULL;
 }
 //声明一个函数
@@ -79,12 +91,14 @@ GENF(ExtDef, 3){
     SN *res1, *res2;
     res1 = Specifier0(node->children);
     FunDec0(node->children->next, res1);
+    
     res2 = CompSt0(node->children->next->next);
+    cur_func = NULL;
     if(!res1 || !res2)
         return NULL;
     //如果返回值类型和函数返回值不对应
     if(!compare_type(res1->type, res2->type)){
-        print_error(8, node->children->first_line);
+        print_error(8, res2->node->first_line);
         return NULL;
     }
     return NULL;
@@ -141,7 +155,9 @@ GENF(Specifier, 1){
 //返回结构体类型
 GENF(Specifier, 2){
     SN *res;
+    
     res = StructSpecifier0(node->children);
+    //printf("123\n");
     return res;
 }
 
@@ -167,9 +183,12 @@ bool redef_member(FieldList fl){
     FieldList nxt = fl->tail;
     while(nxt != NULL){
         while(nxt != NULL){
+            //printf("%s\n", fl->name);
+            //printf("%s\n", fl->tail->name);
             if(!strcmp(cur->name, nxt->name)){
                 return true;
             }
+            nxt = nxt->tail;
         }
         cur = cur->tail;
         nxt = cur->tail;
@@ -182,15 +201,22 @@ bool redef_member(FieldList fl){
 
 //定义一个新的结构体，返回结构体类型
 GENF(StructSpecifier, 1){
+    //printf("123\n");
     SN *res;
-    res = DefList0(node->next->next->next);
-
-    if(res->assigned == 100
-        || redef_member(res->fl)){
-        print_error(15, node->children->first_line);
+    deal_struct = true;
+    res = DefList0(node->children->next->next->next);
+    deal_struct = false;
+    //printf("1234\n");
+    if(res->assigned == 100){
+        print_error(15, res->node->first_line);
         return NULL;
     }
-
+    //printf("123\n");
+    if(redef_member(res->fl)){
+        print_error(15, res->node->first_line);
+        return NULL;        
+    }
+//printf("123\n");
     //下面把结构体成员列表通过res传入OptTag
     res = OptTag0(node->children->next, res);
     //返回的type是结构体
@@ -199,6 +225,7 @@ GENF(StructSpecifier, 1){
 //使用已经定义过的结构体，返回结构体类型
 GENF(StructSpecifier, 2){
     SN *res = Tag0(node->children->next);
+    //printf("name %s\n", res->node->val.val_string);
     STE *ste = search_entry(res->node->val.val_string);
     if(ste == NULL){
         //使用了未定义的结构体
@@ -225,9 +252,10 @@ GENF2(OptTag, 0){
 GENF2(OptTag, 1){
     if(!r)
         return NULL;
-    
+    //printf("%s\n", node->children->val.val_string);
     STE *ste = search_entry(node->children->val.val_string);
     if(ste){
+        //重复定义结构体
         print_error(16, node->children->first_line);
         return NULL;
     }
@@ -238,8 +266,10 @@ GENF2(OptTag, 1){
     //通过前面deflist得到的fl链表
     t->u.structure = r->fl;
     //创建表项
-    create_entry(false, t, node->children);
-    
+    ste = create_entry(false, t, node->children);
+    // if(ste){
+    //     printf("%s\n", ste->name);
+    // }
     //把结构体类型返回
     SN *res = (SN *)malloc(sizeof(SN));
     res->type = t;
@@ -271,7 +301,7 @@ GENF(Tag, 0){
 //直接返回node
 GENF(Tag, 1){
     SN *res = (SN *)malloc(sizeof(SN));
-    res->node = node;
+    res->node = node->children;
     return res;
 }
 
@@ -296,7 +326,7 @@ GENF2(VarDec, 1){
     //这时不需要把变量存在表里面
     //如果通过外部声明触发的话，需要存在符号表里
 
-    if(r->store!=100){
+    if(r->store!=100 && deal_struct == false){
 
         STE *ste = search_entry(node->children->val.val_string);
         if(ste){
@@ -309,9 +339,11 @@ GENF2(VarDec, 1){
         //ste = search_entry(node->children->val.val_string);
         //printf("%s\n", ste->name);
     }
+    SN *res = (SN *)malloc(sizeof(SN));
     //由于结构体需要构造FieldList，需要id名字
-    r->node = node->children;
-    return r;
+    res->type = r->type;
+    res->node = node->children;
+    return res;
 }
 //当是一个数组的话
 GENF2(VarDec, 2){
@@ -356,6 +388,9 @@ GENF2(FunDec, 1){
     ste->paratype = (FP *)malloc(sizeof(FP));
     ste->paratype->paranum = res->valint;
     ste->paratype->typelist = res->ptn;
+
+    cur_func = ste;
+
     return NULL;
 }
 GENF2(FunDec, 2){
@@ -375,6 +410,9 @@ GENF2(FunDec, 2){
     ste->paratype = (FP *)malloc(sizeof(FP));
     ste->paratype->paranum = 0;
     ste->paratype->typelist = NULL;
+
+    cur_func = ste;
+
     return NULL;
 }
 
@@ -397,6 +435,7 @@ GENF(VarList, 1){
     res2 = ParamDec0(node->children);
     
     NEWPTN(res2->type)
+    strcpy(newptn->name, res1->node->val.val_string);
 
     newptn->next = res1->ptn;
 
@@ -411,6 +450,7 @@ GENF(VarList, 2){
     res = ParamDec0(node->children);
 
     NEWPTN(res->type);
+    strcpy(newptn->name, res->node->val.val_string);
     res = malloc(sizeof(SN));
     res->ptn = newptn;
     res->valint=1;
@@ -442,6 +482,7 @@ GENF(ParamDec, 1){
 
 
 GENF(CompSt, 0){
+    //printf("123\n");
     SN *res;
     switch (node->no)
     {
@@ -451,9 +492,8 @@ GENF(CompSt, 0){
     return res;
 }
 GENF(CompSt, 1){
-    
     DefList0(node->children->next);
-
+    
     SN *res;
     res = StmtList0(node->children->next->next);
     return res;
@@ -555,15 +595,21 @@ GENF(DefList, 1){
     if(!res1){
         return NULL;
     }
+    //TODO
     if(res2 && res2->fl){
         //如果下一个定义列表不是空，那就接到def的fl末尾
         FieldList fl = res1->fl;
-        while(fl->tail)
+        while(fl->tail){
             fl = fl->tail;
+        }
+        
         fl->tail = res2->fl;
     }
+    // if(res1->fl && res1->fl->tail){
+    //     printf("123\n");
+    // }
 
-    if(res1->assigned == 100 || res2->assigned == 100)
+    if(res1->assigned == 100 ||(res2 && res2->assigned == 100))
     {
         res1->assigned == 100;
     }
@@ -591,7 +637,15 @@ GENF(Def, 1){
     if(!res)
         return NULL;
     res = DecList0(node->children->next, res);
+    if(!res)
+        return NULL;
+    FieldList fl=res->fl;
+    while(fl){
+        //printf("aa= %s\n",fl->name);
+        fl=fl->tail;
+    }
     //传回declist的fl链表
+    //printf("123\n");
     return res;
 }
 
@@ -619,9 +673,11 @@ GENF2(DecList, 1){
     FieldList fl = malloc(sizeof(struct FieldList_));
 
     strcpy(fl->name,res->node->val.val_string);
+    
     fl->type = res->type;
     fl->tail = NULL;
 
+//printf("kk = %s\n",res->node->val.val_string);
     //把FieldList传回去
     res->fl = fl;
     return res;
@@ -631,15 +687,19 @@ GENF2(DecList, 2){
     SN *res1, *res2;
     //获取Dec的类型和名字
     res1 = Dec0(node->children, r);
+
     //获得declist的fl链表，传入r里面有类型
     res2 = DecList0(node->children->next->next, r);
 
-    if(!res1 || !res2)
+//printf("kk = %s\n",res1->node->val.val_string);
+    if((res1==NULL) || (res2==NULL))
         return NULL;
-
+    //printf("kk = %s\n",res2->node->val.val_string);
     FieldList fl = malloc(sizeof(struct FieldList_));
     strcpy(fl->name,res1->node->val.val_string);
+    //printf("kk = %s\n",res1->node->val.val_string);
     fl->type = res1->type;
+
     fl->tail = res2->fl;
 
     if(res1->assigned == 100
@@ -669,6 +729,8 @@ GENF2(Dec, 1){
     SN *res1;
     //r->store = 100;
     res1 = VarDec0(node->children, r);
+    //if(res1)
+    //    printf("wda %s\n", res1->node->val.val_string);
     return res1;
 }
 
@@ -736,8 +798,9 @@ GENF(Exp, 1){
         print_error(5, node->children->first_line);
         return NULL;
     }
-    if(node->children->type == INT 
-        || node->children->type == FLOAT)   
+    //printf("123\n");
+    if(node->children->children->type == INT 
+        || node->children->children->type == FLOAT)   
     {
         //错误6，赋值号左边出现一个只有右值的表达式
         print_error(6, node->children->first_line);
@@ -922,8 +985,10 @@ bool compare_parameter(PTN *lhs, PTN *rhs){
         return true;
     if((lhs && !rhs) || (!lhs && rhs))
         return false;
+    //printf("123\n");
     if(!compare_type(lhs->type, rhs->type))
         return false;
+        //printf("123\n");
     //递归检查
     return compare_parameter(lhs->next,rhs->next);
 }
@@ -943,12 +1008,20 @@ GENF(Exp, 12){
     }
 
     SN *res1 = Args0(node->children->next->next);
+    
+    // PTN *pt = res1->ptn;
+    // while(pt){
+    //     printf("11\n");
+    //     pt = pt->next;
+    // }
+    
+    
     if(!compare_parameter(ste->paratype->typelist, res1->ptn)){
         //参数不匹配
         print_error(9, node->children->first_line);
         return NULL;        
     }
-
+    //printf("123\n");
     SN* res = (SN *)malloc(sizeof(SN));
     res->type = ste->rettype;
     
@@ -1010,13 +1083,17 @@ FieldList search_member(FieldList fl, const char *name){
 
 //访问结构体
 GENF(Exp, 15){
-    SN *res = Exp0(node->children->next->next);
+    
+    SN *res = Exp0(node->children);
+    
     if(!res)
         return NULL;
+        
     if(res->type->kind != STRUCTURE){
         print_error(13, node->children->first_line);
         return NULL; 
     }
+    
     FieldList res1 = search_member(res->type->u.structure, node->children->next->next->val.val_string);
     if(!res1){
         //没有这个成员
@@ -1031,16 +1108,41 @@ GENF(Exp, 15){
 GENF(Exp, 16){
 
     STE *ste = search_entry(node->children->val.val_string);
-    if(!ste){
+
+    bool ispara = false;
+    PTN *ptn;
+    if(cur_func){
+        ptn = cur_func->paratype->typelist;
+        while(ptn != NULL){
+            //printf("%s\n", ptn->name);
+            if(!strcmp(ptn->name, node->children->val.val_string)){
+                ispara = true;
+                break;
+            }
+            ptn = ptn->next;
+        }
+    }
+    if(!ste && !ispara){
         //printf("%s\n",node->children->val.val_string);
         print_error(1,node->children->first_line);
         return NULL;
     }
+    //printf("123\n");
+
     SN *res = malloc(sizeof(SN));
     res->type = malloc(sizeof(struct Type_));
-    res->type->kind = ste->type->kind;
-    res->type->u = ste->type->u;
-    res->valint = 0;
+    //在符号表里
+    if(ste){
+        res->type->kind = ste->type->kind;
+        res->type->u = ste->type->u;
+        res->valint = 0;
+    }
+    else{
+        res->type->kind = ptn->type->kind;
+        res->type->u = ptn->type->u;
+        res->valint = 0;
+    }
+    res->node = node->children;
     return res;
 }
 GENF(Exp, 17){
@@ -1068,6 +1170,7 @@ GENF(Args, 0){
     SN *res;
     switch(node->no){
     case 1: res = Args1(node); break;
+    case 2: res = Args2(node); break;
     default: break;
     }
 
@@ -1078,7 +1181,10 @@ GENF(Args, 1){
     SN *res1 = Exp0(node->children);
     //获得预期参数列表
     SN *res2 = Args0(node->children->next->next);
-    
+    // if(res2->ptn){
+    //     printf("123\n");
+    // }
+
     //在链表头接入类型
     NEWPTN(res1->type);
     newptn->next = res2->ptn;
@@ -1090,7 +1196,7 @@ GENF(Args, 2){
     //参数链表尾
     SN *res;
     res = Exp0(node->children);
-
+//printf("123\n");
     NEWPTN(res->type);
     res->ptn = newptn;
 
