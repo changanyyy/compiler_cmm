@@ -49,6 +49,46 @@ test:
 	./parser ./Test/test15.cmm
 	./parser ./Test/test16.cmm
 	./parser ./Test/test17.cmm
+	
+	#./parser ./Test/test-1.cmm
+	#./parser ./Test/test-2.cmm
+	#./parser ./Test/test-3.cmm
+	#./parser ./Test/test-4.cmm
+	#./parser ./Test/test-5.cmm
+	#./parser ./Test/test-6.cmm
+
+
+
+	./parser ./Tests_2_Normal/Tests/tests/A-1.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-2.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-3.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-4.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-5.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-6.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-7.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-8.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-9.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-10.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-11.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-12.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-13.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-14.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-15.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-16.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-17.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-18.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-19.cmm
+	./parser ./Tests_2_Normal/Tests/tests/A-20.cmm
+	./parser ./Tests_2_Normal/Tests/tests/B-1.cmm
+	./parser ./Tests_2_Normal/Tests/tests/B-2.cmm
+	./parser ./Tests_2_Normal/Tests/tests/C-1.cmm
+	./parser ./Tests_2_Normal/Tests/tests/C-2.cmm
+	./parser ./Tests_2_Normal/Tests/tests/D-2.cmm
+	./parser ./Tests_2_Normal/Tests/tests/D-3.cmm
+	./parser ./Tests_2_Normal/Tests/tests/E-3.cmm
+
+	./parser ./Test/test.cmm
+
 clean:
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
 	rm -f $(OBJS) $(OBJS:.o=.d)

@@ -1,0 +1,14 @@
+Error type 15 at Line 50
+Error type 15 at Line 51
+Error type 13 at Line 64
+Error type 14 at Line 67
+Error type 5 at Line 85
+Error type 7 at Line 96
+Error type 6 at Line 125
+Error type 2 at Line 158
+Error type 4 at Line 167
+Error type 3 at Line 169
+Error type 16 at Line 216
+Error type 8 at Line 365
+Error type 17 at Line 582
+Error type 9 at Line 644

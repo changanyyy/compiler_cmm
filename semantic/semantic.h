@@ -66,7 +66,18 @@ typedef struct SemNode{
 } SN;
 
 
+struct ErrorBuffer{
+    char errstr[30];
+    int lineno;
+    struct ErrorBuffer *next;
+};
 
+//创建新的error节点
+struct ErrorBuffer *newEB(char *errstr, int lineno);
+//把错误信息插入buffer
+void insert_error_buffer(char *errstr, int lineno);
+//打印错误信息并清空buffer
+void print_error_buffer();
 
 
 

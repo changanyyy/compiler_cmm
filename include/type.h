@@ -28,11 +28,15 @@ struct FieldList_
     char name[50]; // 域的名字
     Type type; // 域的类型 
     FieldList tail; // 下一个域
+    int lline;
 };
 
 
 //比较类型是否相同，递归比较
 bool compare_type(Type lhs, Type rhs);
+
+void print_type(Type this);
+
 
 
 #endif

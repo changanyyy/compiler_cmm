@@ -7,6 +7,9 @@
 
 //创建一个表项，返回表项指针
 STE *create_entry(bool isFunction, Type type, struct GTNode *syntaxNode){
+    //printf("Create Entry: %s\n", syntaxNode->val.val_string);
+
+
     //new一个新表项
     STE *newentry = (STE *)malloc(sizeof(STE));
     memset(newentry, '\0', sizeof(STE));
@@ -57,21 +60,26 @@ bool remove_entry(char *name){
 
 //下面函数用来比较类型
 
-
+//int cnt = 0;
 bool compare_struct_field(FieldList lhs, FieldList rhs){
+    //printf("cnt= %d\n", cnt++);
+    if(!lhs && !rhs)
+        return true;
     if(!lhs || !rhs)
         return false;
     bool res;
     res = compare_type(lhs->type, rhs->type);
     if(!res)
         return false;
-    
-    return compare_struct_field(lhs->tail, rhs->tail);
+    else
+        return compare_struct_field(lhs->tail, rhs->tail);
     
 }
 
 
  bool compare_type(Type lhs, Type rhs){
+    if(!lhs && !rhs)
+        return true;
     if(lhs==NULL || rhs==NULL)
         return false;
     if(lhs->kind != rhs->kind)
@@ -80,11 +88,11 @@ bool compare_struct_field(FieldList lhs, FieldList rhs){
         return lhs->u.basic == rhs->u.basic;
     }
     else if(lhs->kind == ARRAY){
-        if(lhs->u.array.size != rhs->u.array.size)
-            return false;
+        //if(lhs->u.array.size != rhs->u.array.size)
+        //    return false;
         return compare_type(lhs->u.array.elem, rhs->u.array.elem);
     }
-    else if(lhs->kind == STRUCT){
+    else if(lhs->kind == STRUCTURE){
         return compare_struct_field(lhs->u.structure, rhs->u.structure);
     }
     else {
@@ -93,3 +101,41 @@ bool compare_struct_field(FieldList lhs, FieldList rhs){
     }
     
  }
+
+
+void print_type1(Type this, int tab){
+    if(!this)
+        return;
+    for(int i = 0; i < tab; i++){
+        printf("  ");
+    }
+    if(this->kind == BASIC){
+        printf("BASIC TYPE: ");
+        if(this->u.basic == INT){
+            printf("INT\n");
+        }
+        else{
+            printf("FLOAT\n");
+        }
+    }
+    else if(this->kind == STRUCTURE){
+        printf("STRUCTURE:\n");
+        FieldList fl = this->u.structure;
+        while(fl){
+            printf("Member: %s ",fl->name);
+            print_type1(fl->type, tab);
+            fl=fl->tail;
+        }
+    }
+    else if(this->kind == ARRAY){
+        printf("ARRAY: Dim = %d, element:\n", this->u.array.size);
+
+        print_type1(this->u.array.elem, tab+1);
+    }
+}
+
+void print_type(Type this){
+    printf("\nType:\n");
+    print_type1(this, 0);
+    printf("\n");     
+}
