@@ -50,12 +50,12 @@ test:
 	./parser ./Test/test16.cmm
 	./parser ./Test/test17.cmm
 	
-	#./parser ./Test/test-1.cmm
-	#./parser ./Test/test-2.cmm
+	./parser ./Test/test-1.cmm
+	./parser ./Test/test-2.cmm
 	#./parser ./Test/test-3.cmm
 	#./parser ./Test/test-4.cmm
-	#./parser ./Test/test-5.cmm
-	#./parser ./Test/test-6.cmm
+	./parser ./Test/test-5.cmm
+	./parser ./Test/test-6.cmm
 
 
 
@@ -83,8 +83,10 @@ test:
 	./parser ./Tests_2_Normal/Tests/tests/B-2.cmm
 	./parser ./Tests_2_Normal/Tests/tests/C-1.cmm
 	./parser ./Tests_2_Normal/Tests/tests/C-2.cmm
+	./parser ./Tests_2_Normal/Tests/tests/D-1.cmm
 	./parser ./Tests_2_Normal/Tests/tests/D-2.cmm
 	./parser ./Tests_2_Normal/Tests/tests/D-3.cmm
+	./parser ./Tests_2_Normal/Tests/tests/E-1.cmm
 	./parser ./Tests_2_Normal/Tests/tests/E-3.cmm
 
 	./parser ./Test/test.cmm

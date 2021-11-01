@@ -74,6 +74,7 @@ ExtDef:
     Specifier ExtDecList SEMI           { $$ = newnode("ExtDef", UNTERMINAL, 3, @$.first_line, $1, $2, $3); $$->no = 1;}
     | Specifier SEMI                    { $$ = newnode("ExtDef", UNTERMINAL, 2, @$.first_line, $1, $2); $$->no = 2;}
     | Specifier FunDec CompSt           { $$ = newnode("ExtDef", UNTERMINAL, 3, @$.first_line, $1, $2, $3); $$->no = 3;}
+    | Specifier FunDec SEMI             { $$ = newnode("ExtDef", UNTERMINAL, 3, @$.first_line, $1, $2, $3); $$->no = 4;}
     | error SEMI           
     | Specifier error SEMI     
 

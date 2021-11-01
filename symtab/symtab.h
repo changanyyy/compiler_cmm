@@ -17,9 +17,11 @@ struct SymTabEntry{
     
     //符号名字
     char name[50];
-
+    bool isdefine;
     //一些信息
     Type type;
+
+    int lline;
 
     //如果是一个函数
     //存储返回值类型和参数类型
@@ -53,5 +55,6 @@ STE* search_entry(char *name);
 //删除表项（可能用不到）
 bool remove_entry(char *name);
 
+void scan_fun();
 
 #endif

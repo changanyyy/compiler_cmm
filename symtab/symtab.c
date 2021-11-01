@@ -3,12 +3,16 @@
 #include"../include/syntax.h"
 #include"../syntax.tab.h"
 
+char name_list[1000][50];
+int name_list_idx = 0;
 
 
 //创建一个表项，返回表项指针
 STE *create_entry(bool isFunction, Type type, struct GTNode *syntaxNode){
     //printf("Create Entry: %s\n", syntaxNode->val.val_string);
-
+    if(isFunction){//函数的话就存在名字列表里，方便后面遍历
+        strcpy(name_list[name_list_idx++], syntaxNode->val.val_string);
+    }
 
     //new一个新表项
     STE *newentry = (STE *)malloc(sizeof(STE));
@@ -54,6 +58,17 @@ bool remove_entry(char *name){
     return my_rbtree_remove(&mytree, name);
 }
 
+
+void scan_fun(){
+    STE *ste;
+    for(int i = 0; i < name_list_idx; i++){
+        ste = search_entry(name_list[i]);
+        if(!ste->isdefine){
+            print_error(18, ste->lline);
+        }
+    }
+    return;
+}
 
 
 

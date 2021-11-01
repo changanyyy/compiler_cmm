@@ -79,7 +79,7 @@ void insert_error_buffer(char *errstr, int lineno);
 //打印错误信息并清空buffer
 void print_error_buffer();
 
-
+void print_error(int number, int lline);
 
 GENF(Program, 0);
 GENF(Program, 1);
@@ -92,7 +92,7 @@ GENF(ExtDef, 0);
 GENF(ExtDef, 1);
 GENF(ExtDef, 2);
 GENF(ExtDef, 3);
-
+GENF(ExtDef, 4);
 
 GENF2(ExtDecList, 0);
 GENF2(ExtDecList, 1);

@@ -16,6 +16,11 @@ bool arguments_fault;
 //错误buffer，给结构体定义里错误用的
 struct ErrorBuffer head;
 
+bool deal_fun_dec;
+bool deal_same_fun;
+
+bool compare_parameter(PTN *lhs, PTN *rhs, int i, char * s);
+
 
 void print_error(int number, int lline){
     printf("Error type %d at Line %d\n", number, lline);
@@ -76,12 +81,15 @@ GENF(Program, 0){
     arguments_fault = false;
     head.lineno = -1;
     head.next = NULL;
+    deal_fun_dec = false;
+    deal_same_fun = false;
     
     switch (node->no)
     {
     case 1: Program1(node);break;
     default: break;
     }
+    scan_fun();
 
     return NULL;
 }
@@ -120,6 +128,7 @@ GENF(ExtDef, 0){
     case 1: ExtDef1(node);break;
     case 2: ExtDef2(node);break;
     case 3: ExtDef3(node);break;
+    case 4: ExtDef4(node);break;
     default: break;
     }
     return NULL;
@@ -143,16 +152,29 @@ GENF(ExtDef, 2){
     return NULL;
 }
 
-//声明一个函数
+//定义一个函数
 GENF(ExtDef, 3){
     SN *res1;
     res1 = Specifier0(node->children);
     FunDec0(node->children->next, res1);
+    deal_same_fun = false;
     CompSt0(node->children->next->next);
     cur_func = NULL;
-    if(!res1)
-        return NULL;
     return NULL;
+}
+
+//声明一个函数
+GENF(ExtDef, 4){
+    //printf("11\n");
+    SN *res1;
+    res1 = Specifier0(node->children);
+    bool tmp_deal_fun_dec = deal_fun_dec;
+    deal_fun_dec = true;
+    FunDec0(node->children->next, res1);
+    deal_fun_dec = tmp_deal_fun_dec;
+    cur_func = NULL;
+    return NULL;
+
 }
 
 
@@ -378,13 +400,23 @@ GENF2(VarDec, 1){
     //这时不需要把变量存在表里面
     //如果通过外部声明触发的话，需要存在符号表里
     STE *ste = search_entry(node->children->val.val_string);
-    //printf("VarDec: %s\n", node->children->val.val_string);
-    if(ste){
+   
+    if(ste && !deal_same_fun){
         //重复定义
         print_error(3,node->children->first_line);
+        //ste->type = r->type;
         return NULL;
     }
+    else if(ste && deal_same_fun){
+        ste->type = r->type;
+        SN *res = (SN *)malloc(sizeof(SN));
+        //由于结构体需要构造FieldList，需要id名字
+        res->type = r->type;
+        res->node = node->children;
+        return res;
+    }
     if(deal_struct == false){
+        //printf("%d %s\n",node->children->first_line, node->children->val.val_string);
         create_entry(false, r->type, node->children);
     }
     SN *res = (SN *)malloc(sizeof(SN));
@@ -414,65 +446,174 @@ GENF2(VarDec, 2){
 
 
 GENF2(FunDec, 0){
-    SN *res;
     switch (node->no)
     {
-    case 1: res = FunDec1(node, r);break;
-    case 2: res = FunDec2(node, r);break;
+    case 1: FunDec1(node, r);break;
+    case 2: FunDec2(node, r);break;
     default: break;
     }
-    return res;
+    return NULL;
 }
 GENF2(FunDec, 1){
+    //printf("11\n");
     STE *ste = search_entry(node->children->val.val_string);
+    //获得参数类型列表
+    bool eq1, eq2;
+    SN *res;
     if(ste){
-        //重复定义函数
-        print_error(4, node->children->first_line);
+        deal_same_fun = true;
+    }
+    res = VarList0(node->children->next->next);
+    deal_same_fun = false;
+    if(!res){
+        return NULL;
+    }
+    if(deal_fun_dec){//处理函数声明
+
+        if(!ste){//没有表项就创建
+            ste = create_entry(true, NULL, node->children);
+            ste->lline = node->children->first_line;
+            ste->rettype = r->type;
+            ste->isdefine = false;
+            //存函数参数
+            ste->paratype = (FP *)malloc(sizeof(FP));
+            ste->paratype->paranum = res->valint;
+            ste->paratype->typelist = res->ptn;
+            cur_func = ste;
+            return NULL;
+            res = malloc(sizeof(SN));
+            return res;
+        }
+        else{//已经有表项，要比较是否一致
+            //不一致就报错
+            //printf("111");
+            eq1 = compare_type(ste->rettype, r->type);
+            eq2 = compare_parameter(ste->paratype->typelist, res->ptn, 0, "");
+            if(!eq1 || !eq2){
+                print_error(19, node->children->first_line);
+                return NULL;
+            }
+            return NULL;
+        }
     }
     else{
-    //创建符号表项，是函数
-    ste = create_entry(true, NULL, node->children);
-    //返回值类型
-    ste->rettype = r->type;
+        //处理函数定义
+        if(ste && ste->isdefine == false){
+            eq1 = compare_type(ste->rettype, r->type);
+            eq2 = compare_parameter(ste->paratype->typelist, res->ptn, 0, "");
+            if(!eq1 || !eq2){
+                print_error(19, node->children->first_line);
+                //return NULL;
+            }
+            ste->isdefine = true;
+            ste->rettype = r->type;
+            ste->paratype->paranum = res->valint;
+            //printf("para num = %d\n", res->valint);
+            ste->paratype->typelist = res->ptn;
+            cur_func = ste;
+            res = malloc(sizeof(SN));
+            return res;
+        }
+        else if(ste && ste->isdefine == true){
+            print_error(4, node->children->first_line);
+            ste->rettype = r->type;
+            ste->paratype = (FP *)malloc(sizeof(FP));
+            ste->paratype->paranum = res->valint;
+            ste->paratype->typelist = res->ptn;
+            cur_func = ste;
+            res = malloc(sizeof(SN));
+            return res;
+        }
+        else{
+            //创建符号表项，是函数
+            ste = create_entry(true, NULL, node->children);
+            //返回值类型
+            ste->lline = node->children->first_line;
+            ste->isdefine = true;
+            ste->rettype = r->type;
+            ste->paratype = (FP *)malloc(sizeof(FP));
+            ste->paratype->paranum = res->valint;
+            ste->paratype->typelist = res->ptn;
+            cur_func = ste;
+            res = malloc(sizeof(SN));
+            return res;
+        }
+
     }
-
-    //获得参数类型列表
-    SN *res;
-    res = VarList0(node->children->next->next);
-    if(!res)
-        return NULL;
- 
-    //存函数参数
-    ste->paratype = (FP *)malloc(sizeof(FP));
-    ste->paratype->paranum = res->valint;
-    ste->paratype->typelist = res->ptn;
-
-    cur_func = ste;
-
-    res = malloc(sizeof(SN));
+    
+    
     return res;
 }
 GENF2(FunDec, 2){
     //创建符号表项，函数
     STE *ste;
     ste = search_entry(node->children->val.val_string);
-    if(ste){
-        print_error(4, node->children->first_line);
+    deal_same_fun = false;
+    //获得参数类型列表
+    bool eq1, eq2;
+    SN *res;
+    if(deal_fun_dec){//处理函数声明
+        if(!ste){//没有表项就创建
+            ste = create_entry(true, NULL, node->children);
+            ste->rettype = r->type;
+            ste->isdefine = false;
+            //存函数参数
+            ste->paratype = (FP *)malloc(sizeof(FP));
+            ste->paratype->paranum = 0;
+            ste->paratype->typelist = NULL;
+            cur_func = ste;
+            res = malloc(sizeof(SN));
+            return res;
+        }
+        else{//已经有表项，要比较是否一致
+            //不一致就报错
+            eq1 = compare_type(ste->rettype, r->type);
+            eq2 = compare_parameter(ste->paratype->typelist, NULL, 0, "");
+            if(!eq1 || !eq2){
+                print_error(9, node->children->first_line);
+                return NULL;
+            }
+            return NULL;
+        }
     }
-    
-    ste = create_entry(true, NULL, node->children);
-    //返回值类型
-    ste->rettype = r->type;
-    
-    //存函数参数
-    ste->paratype = (FP *)malloc(sizeof(FP));
-    ste->paratype->paranum = 0;
-    ste->paratype->typelist = NULL;
+    else{
+        //处理函数定义
+        if(ste && ste->isdefine == false){
+            eq1 = compare_type(ste->rettype, r->type);
+            eq2 = compare_parameter(ste->paratype->typelist, NULL, 0, "");
+            if(!eq1 || !eq2){
+                print_error(9, node->children->first_line);
+                return NULL;
+            }
+            ste->isdefine = true;
+            cur_func = ste;
+            res = malloc(sizeof(SN));
+            return res;
+        }
+        else if(ste && ste->isdefine == true){
+            print_error(4, node->children->first_line);
+            ste->paratype = (FP *)malloc(sizeof(FP));
+            ste->paratype->paranum = 0;
+            ste->paratype->typelist = NULL;
+            cur_func = ste;
+            res = malloc(sizeof(SN));
+            return res;
+        }
+        else{
+            //创建符号表项，是函数
+            ste = create_entry(true, NULL, node->children);
+            //返回值类型
+            ste->isdefine = true;
+            ste->rettype = r->type;
+            ste->paratype = (FP *)malloc(sizeof(FP));
+            ste->paratype->paranum = 0;
+            ste->paratype->typelist = NULL;
+            cur_func = ste;
+            res = malloc(sizeof(SN));
+            return res;
+        }
 
-    cur_func = ste;
-
-    SN *res = malloc(sizeof(SN));
-    return res;
+    }
 }
 
 
@@ -1187,6 +1328,7 @@ GENF(Exp, 15){
         return NULL;
         
     if(res->type->kind != STRUCTURE){
+        //printf("%s\n", node->children->children->val.val_string);
         print_error(13, node->children->first_line);
         return NULL; 
     }
