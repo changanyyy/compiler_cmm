@@ -225,6 +225,7 @@ struct GTNode* newnode(char *name, int type, int n, ...){
     if(type > UNTERMINAL)  //it's a terminal symbol
     {
         switch(type){
+            case RELOP:
             case ID:
                 strcpy(newn->val.val_string, va_arg(argptr, char *)); break;
             

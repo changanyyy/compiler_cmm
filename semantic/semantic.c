@@ -415,6 +415,8 @@ GENF2(VarDec, 1){
         res->node = node->children;
         return res;
     }
+    
+
     if(deal_struct == false){
         //printf("%d %s\n",node->children->first_line, node->children->val.val_string);
         create_entry(false, r->type, node->children);
@@ -436,6 +438,13 @@ GENF2(VarDec, 2){
     t->kind = ARRAY;
     t->u.array.elem = r->type;
     t->u.array.size = dim;
+
+    if(r->type->kind == BASIC){
+        t->u.array.width = 4;
+    }
+    else if(r->type->kind == ARRAY){
+        t->u.array.width = r->type->u.array.size * r->type->u.array.width;
+    }
 
     //将构造出的新type传入产生式的vardec
     SN *res = malloc(sizeof(SN));

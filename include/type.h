@@ -17,7 +17,7 @@ struct Type_{
         // 基本类型
         int basic;
         // 数组类型信息包括元素类型与数组大小构成
-        struct { Type elem; int size; } array;
+        struct { Type elem; int size;int width; } array;
         // 结构体类型信息是一个链表
         FieldList structure;
     } u;

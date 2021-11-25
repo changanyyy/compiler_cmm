@@ -66,7 +66,7 @@ r_err_comment "/*"([^\*]|(\*)*[^\*/])*(\*)*
 {r_semi}        { yylval.node = newnode("SEMI", SEMI, 0, yylineno);           return SEMI; }
 {r_comma}       { yylval.node = newnode("COMMA", COMMA, 0, yylineno);         return COMMA; }
 {r_assignop}    { yylval.node = newnode("ASSIGNOP", ASSIGNOP, 0, yylineno);   return ASSIGNOP; }
-{r_relop}       { yylval.node = newnode("RELOP", RELOP, 0, yylineno);         return RELOP; }
+{r_relop}       { yylval.node = newnode("RELOP", RELOP, 0, yylineno, yytext); return RELOP; }
 {r_plus}        { yylval.node = newnode("PLUS", PLUS, 0, yylineno);           return PLUS; }
 {r_minus}       { yylval.node = newnode("MINUS", MINUS, 0, yylineno);         return MINUS; }
 {r_star}        { yylval.node = newnode("STAR", STAR, 0, yylineno);           return STAR; }
