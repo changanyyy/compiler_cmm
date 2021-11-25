@@ -19,7 +19,7 @@ struct Operand_{
         STE *ste;
         long int_value;
         double float_value;
-        //STE *addr;
+        STE *addr;
         int tmpnum;
         int labelnum;
     }u;
