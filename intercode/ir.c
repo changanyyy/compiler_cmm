@@ -5,68 +5,86 @@
 
 //struct InterCode *newInterCodes(int kind, Operand opd1, Operand opd2, Operand opd3, char *label)
 struct InterCode *newInterCodes(int kind, ...){
+
     struct InterCode *res = (struct InterCode *)malloc(sizeof(struct InterCode));
 
+    //初始化种类，把前后指针都设置为0
     res->kind = kind;
     res->pre = res->nxt = NULL;
     
+    //变长参数
     va_list argptr;
     va_start(argptr, kind);
+
     switch(kind){        
-    case ASSIGNIR: 
+    case ASSIGNIR://赋值 lhs := rhs
         res->u.assign.lhs = va_arg(argptr, Operand);
         res->u.assign.rhs = va_arg(argptr, Operand);
         break;
-    case ADDIR:
-    case SUBIR: 
-    case MULIR: 
-    case DIVIR:  
+    case ADDIR://加
+    case SUBIR://减
+    case MULIR://乘
+    case DIVIR://除
+        //四则运算 res := op1 op op2
         res->u.binop.res = va_arg(argptr, Operand);
         res->u.binop.op1 = va_arg(argptr, Operand);
         res->u.binop.op2 = va_arg(argptr, Operand);
         break;
-    case LABELIR:
+    case LABELIR://标号语句 LABEL label
         res->u.label = va_arg(argptr, Operand);
         break;
-    case GOTOIR:
+    case GOTOIR://无条件跳转 GOTO gotolabel
         res->u.gotolabel = va_arg(argptr, Operand);
         break;
-    case CONDJMPIR:
+    case CONDJMPIR://有条件跳转 IF lhs relop rhs GOTO label 
         res->u.cjmp.lhs = va_arg(argptr, Operand);
         res->u.cjmp.relop = va_arg(argptr, int);
         res->u.cjmp.rhs = va_arg(argptr, Operand);
         res->u.cjmp.label = va_arg(argptr, Operand);
         break;
-    case READIR:
+    case READIR://READ read
         res->u.read = va_arg(argptr, Operand);
         break;
-    case WRITEIR:
+    case WRITEIR://WRITE write
         res->u.write = va_arg(argptr, Operand);
         break;
-    case CALLIR:
+    case CALLIR://res := CALL fun
         res->u.call.res = va_arg(argptr, Operand);
         res->u.call.fun = va_arg(argptr, STE *);
         break;
-    case ARGIR:
+    case ARGIR://ARG arg
         res->u.arg = va_arg(argptr, Operand);
         break;
-    case RETURNIR:
+    case RETURNIR://RETURN ret
         res->u.ret = va_arg(argptr, Operand);
         break;
-    case DECIR:
+    case DECIR://申请空间 DEC x [size]
         res->u.dec.name = va_arg(argptr, STE *);
         res->u.dec.size = va_arg(argptr, Operand);
         break;
-    case FUNIR:
+    case FUNIR://函数 FUNCTION fun
         res->u.fun = va_arg(argptr, STE *);
         break;
-    case PARAIR:
+    case PARAIR://参数 PARA para
         res->u.para = va_arg(argptr, STE *);
+        break;
+    case ASSIGNADDRIR:
+        res->u.aa.res = va_arg(argptr, Operand);
+        res->u.aa.var = va_arg(argptr, Operand);
+        break;
+    case ASSIGNSTARIR:
+        res->u.as.res = va_arg(argptr, Operand);
+        res->u.as.var = va_arg(argptr, Operand);
+        break;
+    case STARASSIGNIR:
+        res->u.sa.res = va_arg(argptr, Operand);
+        res->u.sa.var = va_arg(argptr, Operand);
         break;
     default: break;
     }
     va_end(argptr);
 
+    //连接到双向链表末尾，其中IRhead是额外链表头
     IRhead.pre->nxt = res;
     res->pre = IRhead.pre;
     res->nxt = &IRhead;
@@ -80,6 +98,7 @@ struct InterCode *newInterCodes(int kind, ...){
 static int numberoftemp = 1;
 //label的编号
 static int numberoflabel = 1;
+
 //new一个操作数
 struct Operand_ *newOperand(int kind, ...){
     Operand opd = (Operand)malloc(sizeof(struct Operand_));
@@ -100,13 +119,14 @@ struct Operand_ *newOperand(int kind, ...){
     //(int kind, bool isint, int/float)
     case CONSTANT:
         isint = va_arg(argptr, bool);
+        opd->isint = isint;
         if(isint) 
             opd->u.int_value = va_arg(argptr, long);
         else 
             opd->u.float_value = va_arg(argptr, double);
         break;
     case ADDRESS:
-        opd->u.ste = va_arg(argptr, STE *);
+        //opd->u.addr = va_arg(argptr, STE *);
         break;
     case TMPVAR:
         opd->u.tmpnum = numberoftemp++;
@@ -120,37 +140,151 @@ struct Operand_ *newOperand(int kind, ...){
     return opd; 
 }
 
+void printOperand(Operand opd){
+    switch(opd->kind){
+    case VARIABLE:
+        printf("%s", opd->u.ste->name);
+        break;
+    case CONSTANT:
+        if(opd->isint) 
+            printf("%d", (int)opd->u.int_value);
+        else 
+            printf("%f", (float)opd->u.float_value);
+        break;
+    case ADDRESS:
+        printf("&%s", opd->u.addr->name);
+        break;
+    case TMPVAR:
+        printf("t%d", opd->u.tmpnum);
+        break;
+    case LABEL:
+        printf("label%d", opd->u.labelnum);
+        break;
+    }
+    return;
+}
+
+void printInterCodes(struct InterCode *ir){
+    switch(ir->kind){        
+    case ASSIGNIR://赋值 lhs := rhs
+        printOperand(ir->u.assign.lhs);
+        printf(" := ");
+        printOperand(ir->u.assign.rhs);
+        break;
+    case ADDIR://加
+        printOperand(ir->u.binop.res);
+        printf(" := ");
+        printOperand(ir->u.binop.op1);
+        printf(" + ");
+        printOperand(ir->u.binop.op2);
+        break;
+    case SUBIR://减
+        printOperand(ir->u.binop.res);
+        printf(" := ");
+        printOperand(ir->u.binop.op1);
+        printf(" - ");
+        printOperand(ir->u.binop.op2);
+        break;
+    case MULIR://乘
+        printOperand(ir->u.binop.res);
+        printf(" := ");
+        printOperand(ir->u.binop.op1);
+        printf(" * ");
+        printOperand(ir->u.binop.op2);
+        break;
+    case DIVIR://除
+        printOperand(ir->u.binop.res);
+        printf(" := ");
+        printOperand(ir->u.binop.op1);
+        printf(" / ");
+        printOperand(ir->u.binop.op2);
+        break;
+    case LABELIR://标号语句 LABEL label
+        printf("LABEL ");
+        printOperand(ir->u.label);
+        break;
+
+    case GOTOIR://无条件跳转 GOTO gotolabel
+        //res->u.gotolabel = va_arg(argptr, Operand);
+        break;
+    case CONDJMPIR://有条件跳转 IF lhs relop rhs GOTO label 
+        /*res->u.cjmp.lhs = va_arg(argptr, Operand);
+        res->u.cjmp.relop = va_arg(argptr, int);
+        res->u.cjmp.rhs = va_arg(argptr, Operand);
+        res->u.cjmp.label = va_arg(argptr, Operand);
+        */break;
+    case READIR://READ read
+        //res->u.read = va_arg(argptr, Operand);
+        break;
+    case WRITEIR://WRITE write
+        //res->u.write = va_arg(argptr, Operand);
+        break;
+    case CALLIR://res := CALL fun
+        /*res->u.call.res = va_arg(argptr, Operand);
+        res->u.call.fun = va_arg(argptr, STE *);
+        */break;
+    case ARGIR://ARG arg
+        //res->u.arg = va_arg(argptr, Operand);
+        break;
+    case RETURNIR://RETURN ret
+        //res->u.ret = va_arg(argptr, Operand);
+        break;
+    case DECIR://申请空间 DEC x [size]
+        //res->u.dec.name = va_arg(argptr, STE *);
+        //res->u.dec.size = va_arg(argptr, Operand);
+        break;
+    case FUNIR://函数 FUNCTION fun
+        //res->u.fun = va_arg(argptr, STE *);
+        break;
+    case PARAIR://参数 PARA para
+        //res->u.para = va_arg(argptr, STE *);
+        break;
+    case ASSIGNADDRIR:
+        //res->u.aa.res = va_arg(argptr, Operand);
+        //res->u.aa.var = va_arg(argptr, Operand);
+        break;
+    case ASSIGNSTARIR:
+        //res->u.as.res = va_arg(argptr, Operand);
+        //res->u.as.var = va_arg(argptr, Operand);
+        break;
+    case STARASSIGNIR:
+        //res->u.sa.res = va_arg(argptr, Operand);
+        //res->u.sa.var = va_arg(argptr, Operand);
+        break;
+    default: break;
+    }
+}
 
 
 //下面开始递归解析生成中间代码
 void IRProgram0(struct GTNode *node){
-    switch(node->no){
-    case 1: IRProgram1(node); break;
-    default: break;
-    }
-    return;
+    //在生成中间代码之前，进行一些初始化，比如IRhead
+    IRhead.pre = IRhead.nxt = &IRhead;
+
+    IRProgram1(node);
 }
 void IRProgram1(struct GTNode *node){
     IRExtDecList0(node->children);
     return;
 }
 
+//外部定义列表
 void IRExtDefList0(struct GTNode *node){
     switch(node->no){
-    case 1: IRExtDecList0(node);
-    case 2: IRExtDecList0(node);
+    case 1: IRExtDecList1(node); break;
+    case 2: IRExtDecList2(node); break;
     default: break;
     }
     return;
 }
 void IRExtDefList1(struct GTNode *node){
-    IRExtDef(node->children);
+    IRExtDef0(node->children);
     IRExtDecList0(node->children->next);
 }
-void IRExtDefList2(struct GTNode *node){
-    //空
-}
+void IRExtDefList2(struct GTNode *node){ }
 
+
+//其实只有2号有用...
 void IRExtDef0(struct GTNode *node){
     switch(node->no){
     case 1: IRExtDef1(node); break;
@@ -162,21 +296,17 @@ void IRExtDef0(struct GTNode *node){
     return;
 }
 void IRExtDef1(struct GTNode *node){
-    IRExtDecList0(node->children->next);
+    //IRExtDecList0(node->children->next);
 }
-void IRExtDef2(struct GTNode *node){
-
-}
+void IRExtDef2(struct GTNode *node){}
 void IRExtDef3(struct GTNode *node){
     IRFunDec0(node->children->next);
-    CompSt0(node->children->next->next);
+    IRCompSt0(node->children->next->next);
 }
-void IRExtDef4(struct GTNode *node){
-    //函数声明，不在
-    //IRFunDec0(node->children->next);
-}
+void IRExtDef4(struct GTNode *node){/*函数声明，忽略*/}
 
-
+//没有全局变量
+/* 
 void IRExtDecList0(struct GTNode *node){
     switch(node->no){
     case 1: IRExtDecList1(node); break;
@@ -192,7 +322,7 @@ void IRExtDecList2(struct GTNode *node){
     IRVarDec0(node->children, NULL);
     IRExtDecList0(node->children->next->next);
 }
-
+*/
 
 /*
 void IRSpecifier0(struct GTNode *node);
@@ -210,6 +340,10 @@ void IRTag0(struct GTNode *node);
 void IRTag1(struct GTNode *node);
 */
 
+
+STE *CurVarDec = NULL;
+//比较关键，变量声明，来源有两个
+//函数局部变量声明，函数参数声明
 void IRVarDec0(struct GTNode *node, int mode){
     switch(node->no){
     case 1: IRVarDec1(node, mode); break;
@@ -221,16 +355,18 @@ void IRVarDec0(struct GTNode *node, int mode){
 void IRVarDec1(struct GTNode *node, int mode){
     STE *ste = search_entry(node->children->val.val_string);
     //计算数组占用的空间
-    Operand size = newOperand(CONSTANT, true, ste->type->u.array.width * ste->type->u.array.size);
-    if(mode == DECIR){
+    if(ste->type->kind == ARRAY && mode == DECIR){
+        Operand size = newOperand(CONSTANT, true, ste->type->u.array.width * ste->type->u.array.size);
+        //局部变量申请空间
         newInterCodes(DECIR, ste, size);
+        CurVarDec = ste;
     }
-    else if(mode == PARAIR){
+    else if(mode == PARAIR){//参数产生参数中间代码
         newInterCodes(PARAIR, ste);
     }
 }
 void IRVarDec2(struct GTNode *node, int mode){
-    IRVarDec0(node->children, mode);
+    IRVarDec0(node->children, mode);//递归进去，找到id
 }
 
 
@@ -253,6 +389,7 @@ void IRFunDec2(struct GTNode *node){
     newInterCodes(FUNIR, ste);
 }
 
+
 void IRVarList0(struct GTNode *node){
     switch(node->no){
     case 1: IRVarList1(node); break;
@@ -266,15 +403,12 @@ void IRVarList1(struct GTNode *node){
     IRVarList0(node->children->next->next);
 }
 void IRVarList2(struct GTNode *node){
-    IRParamDec0(node);
+    IRParamDec0(node->children);
 }
 
+
 void IRParamDec0(struct GTNode *node){
-    switch(node->no){
-    case 1: IRParamDec1(node); break;
-    default: break;
-    }
-    return;
+    IRParamDec1(node);
 }
 void IRParamDec1(struct GTNode *node){
     VarDec0(node->children->next, PARAIR);
@@ -308,11 +442,12 @@ void IRStmtList2(struct GTNode *node){
 void IRStmt0(struct GTNode *node){
     switch(node->no){
     case 1:IRStmt1(node);break;
-    case 2:IRStmt1(node);break;
-    case 3:IRStmt1(node);break;
-    case 4:IRStmt1(node);break;
-    case 5:IRStmt1(node);break;
-    case 6:IRStmt1(node);break;
+    case 2:IRStmt2(node);break;
+    case 3:IRStmt3(node);break;
+    case 4:IRStmt4(node);break;
+    case 5:IRStmt5(node);break;
+    case 6:IRStmt6(node);break;
+    default: break;
     }
     return;
 }
@@ -326,7 +461,6 @@ void IRStmt3(struct GTNode *node){
     Operand t1 = newOperand(TMPVAR);
     IRExp0(node->children->next, t1);
     newInterCodes(RETURNIR, t1);
-
 }
 void IRStmt4(struct GTNode *node){
     Operand l1 = newOperand(LABEL);
@@ -373,9 +507,7 @@ void IRDefList1(struct GTNode *node){
     IRDef0(node->children);
     IRDefList0(node->children->next);
 }
-void IRDefList2(struct GTNode *node){
-    //空
-}
+void IRDefList2(struct GTNode *node){/*空*/}
 
 
 void IRDef0(struct GTNode *node){
@@ -394,17 +526,31 @@ void IRDecList0(struct GTNode *node){
     return;
 }
 void IRDecList1(struct GTNode *node){
-    IRVarDec0(node->children, Dec0);
+    IRDec0(node->children);
 }
 void IRDecList2(struct GTNode *node){
-    Operand t1 = newOperand(TMPVAR);
-    IRExp0(node->children->next->next, t1);
-    
+    IRDec0(node->children);
+    IRDecList0(node->children->next->next);
 }
 
-void IRDec0(struct GTNode *node);
-void IRDec1(struct GTNode *node);
-void IRDec2(struct GTNode *node);
+void IRDec0(struct GTNode *node){
+    switch(node->no){
+    case 1: IRDec1(node); break;
+    case 2: IRDec2(node); break;
+    }
+    return;
+}
+void IRDec1(struct GTNode *node){
+    IRVarDec0(node->children, DECIR);
+}
+void IRDec2(struct GTNode *node){
+    IRVarDec0(node->children, DECIR);
+    Operand t1 = newOperand(TMPVAR);
+    IRExp0(node->children->next->next, t1);
+    Operand res = newOperand(VARIABLE, CurVarDec);
+    CurVarDec = NULL;
+    newInterCodes(ASSIGNIR, res, t1);
+}
 
 
 Type IRExp0(struct GTNode *node,Operand place){
@@ -438,7 +584,13 @@ void IRExp1(struct GTNode *node, Operand place){
     {
     case 14://Exp1->array
     //TODO
-
+        Operand t1 = newOperand(TMPVAR);
+        Operand t2 = newOperand(TMPVAR);
+        IRExp0(node->children, t1);
+        IRExp0(node->children->next->next, t2);
+        newInterCodes(STARASSIGNIR, t1, t2);
+        if(place)
+            newInterCodes(STARASSIGNIR, place, t2);
         break;
     case 15://Exp1->structure
     //TODO
@@ -451,7 +603,6 @@ void IRExp1(struct GTNode *node, Operand place){
         newInterCodes(ASSIGNIR, var, t);
         if(place)
             newInterCodes(ASSIGNIR, place, var);
-        
         break;
     default:
         break;
@@ -459,10 +610,13 @@ void IRExp1(struct GTNode *node, Operand place){
     return;
 }
 void IRExp2(struct GTNode *node, Operand place){
+    if(!place)
+        return;
     Operand l1 = newOperand(LABEL);
     Operand l2 = newOperand(LABEL);
     Operand zero = newOperand(CONSTANT, true, 0);
     Operand one = newOperand(CONSTANT, true, 1);
+    
     newInterCodes(ASSIGNIR, place, zero);
     translate_Cond(node, l1, l2);
     newInterCodes(LABELIR, l1);
@@ -479,42 +633,46 @@ void IRExp4(struct GTNode *node, Operand place){
 //下面是表达式的加减乘除四则运算
 //加法
 void IRExp5(struct GTNode *node, Operand place){
+    if(!place)
+        return;
     Operand t1 = newOperand(TMPVAR);
     Operand t2 = newOperand(TMPVAR);
     IRExp0(node->children, t1);
     IRExp0(node->children->next->next, t2);
-    if(place)
-        newInterCodes(ADDIR, place, t1, t2);
+    newInterCodes(ADDIR, place, t1, t2);
     return;
 }
 //减法
 void IRExp6(struct GTNode *node, Operand place){
+    if(!place)
+        return;
     Operand t1 = newOperand(TMPVAR);
     Operand t2 = newOperand(TMPVAR);
     IRExp0(node->children, t1);
     IRExp0(node->children->next->next, t2);
-    if(place)
-        newInterCodes(SUBIR, place, t1, t2);
+    newInterCodes(SUBIR, place, t1, t2);
     return;
 }
 //乘法
 void IRExp7(struct GTNode *node, Operand place){
+    if(!place)
+        return;
     Operand t1 = newOperand(TMPVAR);
     Operand t2 = newOperand(TMPVAR);
     IRExp0(node->children, t1);
     IRExp0(node->children->next->next, t2);
-    if(place)
-        newInterCodes(MULIR, place, t1, t2);
+    newInterCodes(MULIR, place, t1, t2);
     return;
 }
 //除法
 void IRExp8(struct GTNode *node, Operand place){
+    if(!place)
+        return;    
     Operand t1 = newOperand(TMPVAR);
     Operand t2 = newOperand(TMPVAR);
     IRExp0(node->children, t1);
     IRExp0(node->children->next->next, t2);
-    if(place)
-        newInterCodes(DIVIR, place, t1, t2);
+    newInterCodes(DIVIR, place, t1, t2);
     return;
 }
 
@@ -522,6 +680,8 @@ void IRExp9(struct GTNode *node, Operand place){
     IRExp0(node, place);
 }
 void IRExp10(struct GTNode *node, Operand place){
+    if(!place)
+        return;
     Operand t1 = newOperand(TMPVAR);
     IRExp0(node->children->next, t1);
     Operand zero = newOperand(CONSTANT, true, 0);
@@ -531,6 +691,8 @@ void IRExp11(struct GTNode *node, Operand place){
     IRExp2(node, place);
 }
 void IRExp12(struct GTNode *node, Operand place){//ID LP Args RP
+    if(!place)
+        return;    
     STE *ste = search_entry(node->children->val.val_string);
     Operand arglist;
     IRArgs0(node->children->next->next, &arglist);
@@ -548,6 +710,8 @@ void IRExp12(struct GTNode *node, Operand place){//ID LP Args RP
     return;
 }
 void IRExp13(struct GTNode *node, Operand place){//ID LP RP
+    if(!place)
+        return;
     STE *ste = search_entry(node->children->val.val_string);
     if(!ste){
         printf("Error ir 324\n");
@@ -559,9 +723,11 @@ void IRExp13(struct GTNode *node, Operand place){//ID LP RP
     newInterCodes(CALLIR, place, ste);
 }
 
-//STE *curarr = NULL;
+
 
 Type IRExp14(struct GTNode *node, Operand place){//Exp LB Exp RB
+    if(!place)
+        return; 
     Type type;
     Operand t1 = newOperand(TMPVAR);
     type = IRExp0(node->children, t1);
@@ -571,25 +737,34 @@ Type IRExp14(struct GTNode *node, Operand place){//Exp LB Exp RB
     //计算宽度
     newInterCodes(MULIR, t2, t2, wid);
     //加到前面的计算值上
-    newInterCodes(ADDIR, t1, t1, t2);
+    newInterCodes(ADDIR, place, t1, t2);
+    /*if(type->u.array.elem->kind != ARRAY){
+        place->kind = ADDRESS;//到了最外层，把place改成address
+    }*/
     //返回下一层元素
     return type->u.array.elem;
 }
-void IRExp15(struct GTNode *node);//Exp DOT ID
+void IRExp15(struct GTNode *node){ }//Exp DOT ID
 
 Type IRExp16(struct GTNode *node, Operand place){//ID
+    if(!place)
+        return;
     STE *ste = search_entry(node->children->val.val_string);
     Operand opd = newOperand(ADDRESS, ste);
     newInterCodes(ASSIGNIR, place, opd);
     return ste->type;
 }
 void IRExp17(struct GTNode *node, Operand place){
+    if(!place)
+        return;
     long val = node->children->val.val_int;
     Operand i = newOperand(CONSTANT, true, val);
     newInterCodes(ASSIGNIR, place, i);
     return;
 }
 void IRExp18(struct GTNode *node, Operand place){
+    if(!place)
+        return;
     double val = node->children->val.val_float;
     Operand i = newOperand(CONSTANT, false, val);
     newInterCodes(ASSIGNIR, place, i);

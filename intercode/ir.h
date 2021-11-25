@@ -4,19 +4,22 @@
 #include<stdarg.h>
 #include<stdio.h>
 #include<stdlib.h>
+#include<stdbool.h>
 
 //操作数
 typedef struct Operand_* Operand;
 struct Operand_{
     //操作数类别
-    enum{VARIABLE, CONSTANT, ADDRESS, TMPVAR, LABEL} kind;
-    
+    enum{
+        VARIABLE, CONSTANT, ADDRESS, TMPVAR, LABEL
+    } kind;
+    bool isint;
     //变量编号
     union{
         STE *ste;
         long int_value;
         double float_value;
-        STE *addr;
+        //STE *addr;
         int tmpnum;
         int labelnum;
     }u;
@@ -27,11 +30,13 @@ struct Operand_{
 
 //中间代码的类别，赋值，加减乘除，标签...
 enum Kind{ 
-    ASSIGNIR = 0, 
-    ADDIR, SUBIR, MULIR, DIVIR, 
-    LABELIR, GOTOIR, CONDJMPIR,
-    READIR, WRITEIR, CALLIR, ARGIR, RETURNIR,
-    DECIR, FUNIR, PARAIR
+    ASSIGNIR = 0, //赋值
+    ADDIR, SUBIR, MULIR, DIVIR,//加减乘除 
+    LABELIR, GOTOIR, CONDJMPIR,//标号，无条件跳转，有条件跳转
+    READIR, WRITEIR, //read和write函数
+    CALLIR, ARGIR, RETURNIR,//函数调用和返回
+    DECIR, FUNIR, PARAIR,//变量空间申请，函数名，函数参数
+    ASSIGNADDRIR, ASSIGNSTARIR, STARASSIGNIR//赋值地址，取星赋值，赋值给星
 };
 //中间代码的表示方式，我选择三地址代码
 //IRhead代表中间代码链的头部
@@ -44,7 +49,9 @@ struct InterCode{
         Operand gotolabel;
         struct {
             Operand lhs, rhs, label; 
-            enum{G = 0, GE, EQ, L, LE, NE} relop;
+            enum{//大于，大于等于，等于，小于，小于等于，不等于
+                G = 0, GE, EQ, L, LE, NE
+            } relop;
         } cjmp;
         Operand read;
         Operand write;
@@ -54,6 +61,9 @@ struct InterCode{
         struct{STE *name; Operand size;}dec;
         STE *fun;
         STE *para;
+        struct{ Operand res; Operand var;} aa;
+        struct{ Operand res; Operand var;} as;
+        struct{ Operand res; Operand var;} sa;
     }u;
 
     struct InterCode *pre, *nxt;
@@ -61,11 +71,15 @@ struct InterCode{
 
 
 
-
+//产生中间代码，加到链表尾部，返回该中间代码节点指针（其实没啥用）
 struct InterCode *newInterCodes(int kind, ...);
 
+//产生操作数，返回该节点指针
 struct Operand_ *newOperand(int kind, ...);
 
+
+void printOperand(Operand);
+void printInterCodes(struct InterCode *);
 
 
 void IRProgram0(struct GTNode *node);
@@ -81,10 +95,11 @@ void IRExtDef2(struct GTNode *node);
 void IRExtDef3(struct GTNode *node);
 void IRExtDef4(struct GTNode *node);
 
+/*
 void IRExtDecList0(struct GTNode *node);
 void IRExtDecList1(struct GTNode *node);
 void IRExtDecList2(struct GTNode *node);
-
+*/
 
 /*
 void IRSpecifier0(struct GTNode *node);
