@@ -5,15 +5,17 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
+#include"../semantic/semantic.h"
+#include"../symtab/symtab.h"
 
 //操作数
 typedef struct Operand_* Operand;
 struct Operand_{
     //操作数类别
     enum{
-        VARIABLE, CONSTANT, ADDRESS, TMPVAR, LABEL
+        VARABLE, CONSTANT, ADDRESS, TMPVAR, LABEL
     } kind;
-    bool isint;
+    int isint;
     //变量编号
     union{
         STE *ste;
@@ -58,7 +60,7 @@ struct InterCode{
         struct{ Operand res; STE *fun;}call;
         Operand arg;
         Operand ret;
-        struct{STE *name; Operand size;}dec;
+        struct{STE *name; int size;}dec;
         STE *fun;
         STE *para;
         struct{ Operand res; Operand var;} aa;
@@ -80,6 +82,8 @@ struct Operand_ *newOperand(int kind, ...);
 
 void printOperand(Operand);
 void printInterCodes(struct InterCode *);
+void printIC();
+
 
 
 void IRProgram0(struct GTNode *node);

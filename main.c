@@ -5,6 +5,7 @@
 #include"./syntax.tab.h"
 #include"semantic/semantic.h"
 #include"symtab/symtab.h"
+#include"intercode/ir.h"
 
 void yyrestart(FILE *);
 
@@ -38,7 +39,8 @@ int main(int argc, char** argv){
 
     
     Program0(root);
-    
+    IRProgram0(root);
+    printIC();
 
     return 0;
 }

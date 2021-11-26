@@ -31,6 +31,7 @@ struct InterCode *newInterCodes(int kind, ...){
         res->u.binop.op2 = va_arg(argptr, Operand);
         break;
     case LABELIR://标号语句 LABEL label
+//printIC();
         res->u.label = va_arg(argptr, Operand);
         break;
     case GOTOIR://无条件跳转 GOTO gotolabel
@@ -60,7 +61,7 @@ struct InterCode *newInterCodes(int kind, ...){
         break;
     case DECIR://申请空间 DEC x [size]
         res->u.dec.name = va_arg(argptr, STE *);
-        res->u.dec.size = va_arg(argptr, Operand);
+        res->u.dec.size = va_arg(argptr, int);
         break;
     case FUNIR://函数 FUNCTION fun
         res->u.fun = va_arg(argptr, STE *);
@@ -104,21 +105,21 @@ struct Operand_ *newOperand(int kind, ...){
     Operand opd = (Operand)malloc(sizeof(struct Operand_));
     opd->kind = kind;
 
-    bool isint;
+    int isint;
     va_list argptr;
     va_start(argptr, kind);
     
     switch(kind){
     //如果操作数是一个变量，那么可以在符号表里面查到
     //(int kind, STE *)
-    case VARIABLE:
+    case VARABLE:
         opd->u.ste = va_arg(argptr, STE *);
         break;
     //如果操作数是一个常量，那么获得它的值
     //第二个参数判断是否是整型数，isint==true代表整型，否则浮点型
     //(int kind, bool isint, int/float)
     case CONSTANT:
-        isint = va_arg(argptr, bool);
+        isint = va_arg(argptr, int);//TODO
         opd->isint = isint;
         if(isint) 
             opd->u.int_value = va_arg(argptr, long);
@@ -126,7 +127,7 @@ struct Operand_ *newOperand(int kind, ...){
             opd->u.float_value = va_arg(argptr, double);
         break;
     case ADDRESS:
-        //opd->u.addr = va_arg(argptr, STE *);
+        opd->u.addr = va_arg(argptr, STE *);
         break;
     case TMPVAR:
         opd->u.tmpnum = numberoftemp++;
@@ -141,17 +142,19 @@ struct Operand_ *newOperand(int kind, ...){
 }
 
 void printOperand(Operand opd){
+    //printf("# %d #\n",opd->kind);
     switch(opd->kind){
-    case VARIABLE:
+    case VARABLE:
         printf("%s", opd->u.ste->name);
         break;
     case CONSTANT:
         if(opd->isint) 
-            printf("%d", (int)opd->u.int_value);
+            printf("#%d", (int)opd->u.int_value);
         else 
-            printf("%f", (float)opd->u.float_value);
+            printf("#%f", (float)opd->u.float_value);
         break;
     case ADDRESS:
+        //printf("122342342\n");
         printf("&%s", opd->u.addr->name);
         break;
     case TMPVAR:
@@ -165,8 +168,10 @@ void printOperand(Operand opd){
 }
 
 void printInterCodes(struct InterCode *ir){
+    //printf("%d\n", ir->kind);
     switch(ir->kind){        
     case ASSIGNIR://赋值 lhs := rhs
+    //printf("1\n");
         printOperand(ir->u.assign.lhs);
         printf(" := ");
         printOperand(ir->u.assign.rhs);
@@ -202,57 +207,93 @@ void printInterCodes(struct InterCode *ir){
     case LABELIR://标号语句 LABEL label
         printf("LABEL ");
         printOperand(ir->u.label);
+        printf(" :");
         break;
-
     case GOTOIR://无条件跳转 GOTO gotolabel
-        //res->u.gotolabel = va_arg(argptr, Operand);
+        printf("GOTO ");
+        printOperand(ir->u.gotolabel);
         break;
-    case CONDJMPIR://有条件跳转 IF lhs relop rhs GOTO label 
-        /*res->u.cjmp.lhs = va_arg(argptr, Operand);
-        res->u.cjmp.relop = va_arg(argptr, int);
-        res->u.cjmp.rhs = va_arg(argptr, Operand);
-        res->u.cjmp.label = va_arg(argptr, Operand);
-        */break;
+    case CONDJMPIR://有条件跳转 IF lhs relop rhs GOTO label
+        printf("IF ");
+        printOperand(ir->u.cjmp.lhs);
+        switch(ir->u.cjmp.relop){
+        case 0: printf(" > "); break;
+        case 1: printf(" >= "); break;
+        case 2: printf(" == "); break;
+        case 3: printf(" < "); break;
+        case 4: printf(" <= "); break;
+        case 5: printf(" != "); break;
+        default: exit(0); break;
+        }
+        printOperand(ir->u.cjmp.rhs);
+        printf(" GOTO ");
+        printOperand(ir->u.cjmp.label);
+        break;
     case READIR://READ read
-        //res->u.read = va_arg(argptr, Operand);
+        printf("READ ");
+        printOperand(ir->u.read);
         break;
     case WRITEIR://WRITE write
-        //res->u.write = va_arg(argptr, Operand);
+        printf("WRITE ");
+        printOperand(ir->u.write);
         break;
     case CALLIR://res := CALL fun
-        /*res->u.call.res = va_arg(argptr, Operand);
-        res->u.call.fun = va_arg(argptr, STE *);
-        */break;
+        printOperand(ir->u.call.res);
+        printf(" := CALL ");
+        printf("%s", ir->u.call.fun->name);
+        break;
     case ARGIR://ARG arg
-        //res->u.arg = va_arg(argptr, Operand);
+        printf("ARG ");
+        printOperand(ir->u.arg);
         break;
     case RETURNIR://RETURN ret
-        //res->u.ret = va_arg(argptr, Operand);
+        printf("RETURN ");
+        printOperand(ir->u.ret);
         break;
     case DECIR://申请空间 DEC x [size]
-        //res->u.dec.name = va_arg(argptr, STE *);
-        //res->u.dec.size = va_arg(argptr, Operand);
+        printf("DEC ");
+        printf("%s ", ir->u.dec.name->name);
+        printf("%d", ir->u.dec.size);
         break;
     case FUNIR://函数 FUNCTION fun
-        //res->u.fun = va_arg(argptr, STE *);
+        printf("FUNCTION ");
+        printf("%s :", ir->u.fun->name);
         break;
     case PARAIR://参数 PARA para
-        //res->u.para = va_arg(argptr, STE *);
+        printf("PARAM ");
+        printf("%s", ir->u.para->name);
         break;
     case ASSIGNADDRIR:
-        //res->u.aa.res = va_arg(argptr, Operand);
-        //res->u.aa.var = va_arg(argptr, Operand);
+        printOperand(ir->u.aa.res);
+        printf(" := &");
+        printOperand(ir->u.aa.var);
         break;
     case ASSIGNSTARIR:
-        //res->u.as.res = va_arg(argptr, Operand);
-        //res->u.as.var = va_arg(argptr, Operand);
+        printOperand(ir->u.as.res);
+        printf(" := *");
+        printOperand(ir->u.as.var);
         break;
     case STARASSIGNIR:
+        printf("*");
+        printOperand(ir->u.sa.res);
+        printf(" := ");
+        printOperand(ir->u.sa.var);
         //res->u.sa.res = va_arg(argptr, Operand);
         //res->u.sa.var = va_arg(argptr, Operand);
         break;
     default: break;
     }
+    printf("\n");
+}
+
+
+void printIC(){
+    struct InterCode *p = IRhead.nxt;
+    while(p != &IRhead){
+        printInterCodes(p);
+        p = p->nxt;
+    }
+    return;
 }
 
 
@@ -264,22 +305,22 @@ void IRProgram0(struct GTNode *node){
     IRProgram1(node);
 }
 void IRProgram1(struct GTNode *node){
-    IRExtDecList0(node->children);
+    IRExtDefList0(node->children);
     return;
 }
 
 //外部定义列表
 void IRExtDefList0(struct GTNode *node){
     switch(node->no){
-    case 1: IRExtDecList1(node); break;
-    case 2: IRExtDecList2(node); break;
+    case 1: IRExtDefList1(node); break;
+    case 2: IRExtDefList2(node); break;
     default: break;
     }
     return;
 }
 void IRExtDefList1(struct GTNode *node){
     IRExtDef0(node->children);
-    IRExtDecList0(node->children->next);
+    IRExtDefList0(node->children->next);
 }
 void IRExtDefList2(struct GTNode *node){ }
 
@@ -354,12 +395,11 @@ void IRVarDec0(struct GTNode *node, int mode){
 }
 void IRVarDec1(struct GTNode *node, int mode){
     STE *ste = search_entry(node->children->val.val_string);
+    CurVarDec = ste;
     //计算数组占用的空间
     if(ste->type->kind == ARRAY && mode == DECIR){
-        Operand size = newOperand(CONSTANT, true, ste->type->u.array.width * ste->type->u.array.size);
         //局部变量申请空间
-        newInterCodes(DECIR, ste, size);
-        CurVarDec = ste;
+        newInterCodes(DECIR, ste, ste->type->u.array.width * ste->type->u.array.size);
     }
     else if(mode == PARAIR){//参数产生参数中间代码
         newInterCodes(PARAIR, ste);
@@ -411,7 +451,7 @@ void IRParamDec0(struct GTNode *node){
     IRParamDec1(node);
 }
 void IRParamDec1(struct GTNode *node){
-    VarDec0(node->children->next, PARAIR);
+    IRVarDec0(node->children->next, PARAIR);
 }
 
 
@@ -419,6 +459,7 @@ void IRCompSt0(struct GTNode *node){
     IRCompSt1(node);
 }
 void IRCompSt1(struct GTNode *node){
+    
     IRDefList0(node->children->next);
     IRStmtList0(node->children->next->next);
 }
@@ -440,6 +481,7 @@ void IRStmtList2(struct GTNode *node){
 }
 
 void IRStmt0(struct GTNode *node){
+    //printf("node->no = %d\n", node->no);
     switch(node->no){
     case 1:IRStmt1(node);break;
     case 2:IRStmt2(node);break;
@@ -452,10 +494,12 @@ void IRStmt0(struct GTNode *node){
     return;
 }
 void IRStmt1(struct GTNode *node){
+    //printf("111\n");
     IRExp0(node->children, NULL);
 }
 void IRStmt2(struct GTNode *node){
-    CompSt0(node->children);
+    //printf("11111\n");
+    IRCompSt0(node->children);
 }
 void IRStmt3(struct GTNode *node){
     Operand t1 = newOperand(TMPVAR);
@@ -474,12 +518,16 @@ void IRStmt5(struct GTNode *node){
     Operand l1 = newOperand(LABEL);
     Operand l2 = newOperand(LABEL);
     Operand l3 = newOperand(LABEL);
+    
     translate_Cond(node->children->next->next, l1, l2);
     newInterCodes(LABELIR, l1);
     IRStmt0(node->children->next->next->next->next);
     newInterCodes(GOTOIR, l3);
     newInterCodes(LABELIR, l2);
+    //printf("222222\n");
     IRStmt0(node->children->next->next->next->next->next->next);
+    //printf("222222\n");
+    //printIC();
     newInterCodes(LABELIR, l3);
 }
 void IRStmt6(struct GTNode *node){
@@ -542,18 +590,20 @@ void IRDec0(struct GTNode *node){
 }
 void IRDec1(struct GTNode *node){
     IRVarDec0(node->children, DECIR);
+    //printIC();
 }
 void IRDec2(struct GTNode *node){
     IRVarDec0(node->children, DECIR);
     Operand t1 = newOperand(TMPVAR);
     IRExp0(node->children->next->next, t1);
-    Operand res = newOperand(VARIABLE, CurVarDec);
+    Operand res = newOperand(VARABLE, CurVarDec);
     CurVarDec = NULL;
     newInterCodes(ASSIGNIR, res, t1);
 }
 
 
 Type IRExp0(struct GTNode *node,Operand place){
+    
     Type t = NULL;
     switch(node->no){
     case 1:  IRExp1(node, place);break;
@@ -578,29 +628,36 @@ Type IRExp0(struct GTNode *node,Operand place){
     }
     return t;
 }
+
+int deal_array_IR = 0;
+
 void IRExp1(struct GTNode *node, Operand place){
     STE *ste;
+    Operand t1, t2, t3, var;
     switch (node->children->no)
     {
     case 14://Exp1->array
     //TODO
-        Operand t1 = newOperand(TMPVAR);
-        Operand t2 = newOperand(TMPVAR);
+        t1 = newOperand(TMPVAR);
+        t2 = newOperand(TMPVAR);
+        deal_array_IR = 1;
         IRExp0(node->children, t1);
+        deal_array_IR = 0;
         IRExp0(node->children->next->next, t2);
         newInterCodes(STARASSIGNIR, t1, t2);
         if(place)
-            newInterCodes(STARASSIGNIR, place, t2);
+            newInterCodes(ASSIGNIR, place, t2);
         break;
     case 15://Exp1->structure
     //TODO
         break;
     case 16://Exp1->id
         ste = search_entry(node->children->children->val.val_string);//搜索表项
-        Operand t = newOperand(TMPVAR);
-        IRExp0(node->children->next->next, t);
-        Operand var = newOperand(VARIABLE, ste);
-        newInterCodes(ASSIGNIR, var, t);
+        t1 = newOperand(TMPVAR);
+        IRExp0(node->children->next->next, t1);
+        var = newOperand(VARABLE, ste);
+        newInterCodes(ASSIGNIR, var, t1);
+
         if(place)
             newInterCodes(ASSIGNIR, place, var);
         break;
@@ -614,8 +671,8 @@ void IRExp2(struct GTNode *node, Operand place){
         return;
     Operand l1 = newOperand(LABEL);
     Operand l2 = newOperand(LABEL);
-    Operand zero = newOperand(CONSTANT, true, 0);
-    Operand one = newOperand(CONSTANT, true, 1);
+    Operand zero = newOperand(CONSTANT, 1, 0);
+    Operand one = newOperand(CONSTANT, 1, 1);
     
     newInterCodes(ASSIGNIR, place, zero);
     translate_Cond(node, l1, l2);
@@ -677,36 +734,36 @@ void IRExp8(struct GTNode *node, Operand place){
 }
 
 void IRExp9(struct GTNode *node, Operand place){
-    IRExp0(node, place);
+    IRExp0(node->children->next, place);
 }
 void IRExp10(struct GTNode *node, Operand place){
     if(!place)
         return;
     Operand t1 = newOperand(TMPVAR);
     IRExp0(node->children->next, t1);
-    Operand zero = newOperand(CONSTANT, true, 0);
+    Operand zero = newOperand(CONSTANT, 1, 0);
     newInterCodes(SUBIR, place, zero, t1);
 }
 void IRExp11(struct GTNode *node, Operand place){
     IRExp2(node, place);
 }
-void IRExp12(struct GTNode *node, Operand place){//ID LP Args RP
-    if(!place)
-        return;    
+void IRExp12(struct GTNode *node, Operand place){//ID LP Args RP    
     STE *ste = search_entry(node->children->val.val_string);
     Operand arglist;
     IRArgs0(node->children->next->next, &arglist);
+    //printf("111\n");
     if(!strcmp(ste->name, "write")){
+        
         newInterCodes(WRITEIR, arglist);
-        Operand zero = newOperand(CONSTANT, true, 0);
-        newInterCodes(ASSIGNIR, place, zero);
+        Operand zero = newOperand(CONSTANT, 1, 0);
         return;
     }
     for(int i = 0; i < ste->paratype->paranum; i++){
         newInterCodes(ARGIR, arglist);
         arglist = arglist->nxt;
     }
-    newInterCodes(CALLIR, place, ste);
+    if(place)
+        newInterCodes(CALLIR, place, ste);
     return;
 }
 void IRExp13(struct GTNode *node, Operand place){//ID LP RP
@@ -727,20 +784,24 @@ void IRExp13(struct GTNode *node, Operand place){//ID LP RP
 
 Type IRExp14(struct GTNode *node, Operand place){//Exp LB Exp RB
     if(!place)
-        return; 
+        return NULL; 
     Type type;
     Operand t1 = newOperand(TMPVAR);
     type = IRExp0(node->children, t1);
     Operand t2 = newOperand(TMPVAR);
     IRExp0(node->children->next->next, t2);
-    Operand wid = newOperand(CONSTANT, true, type->u.array.width);
+    Operand wid = newOperand(CONSTANT, 1, type->u.array.width);
     //计算宽度
     newInterCodes(MULIR, t2, t2, wid);
     //加到前面的计算值上
-    newInterCodes(ADDIR, place, t1, t2);
-    /*if(type->u.array.elem->kind != ARRAY){
-        place->kind = ADDRESS;//到了最外层，把place改成address
-    }*/
+    if(deal_array_IR){
+        newInterCodes(ADDIR, place, t1, t2);
+    }
+    else{
+        newInterCodes(ADDIR, place, t1, t2);
+        newInterCodes(ASSIGNSTARIR, place, place);
+    }
+
     //返回下一层元素
     return type->u.array.elem;
 }
@@ -748,9 +809,14 @@ void IRExp15(struct GTNode *node){ }//Exp DOT ID
 
 Type IRExp16(struct GTNode *node, Operand place){//ID
     if(!place)
-        return;
+        return NULL;
     STE *ste = search_entry(node->children->val.val_string);
-    Operand opd = newOperand(ADDRESS, ste);
+    Operand opd;
+    if(ste->type->kind == ARRAY){
+        opd = newOperand(ADDRESS, ste);
+    }else{
+        opd = newOperand(VARABLE, ste);
+    }
     newInterCodes(ASSIGNIR, place, opd);
     return ste->type;
 }
@@ -758,7 +824,7 @@ void IRExp17(struct GTNode *node, Operand place){
     if(!place)
         return;
     long val = node->children->val.val_int;
-    Operand i = newOperand(CONSTANT, true, val);
+    Operand i = newOperand(CONSTANT, 1, val);
     newInterCodes(ASSIGNIR, place, i);
     return;
 }
@@ -766,7 +832,7 @@ void IRExp18(struct GTNode *node, Operand place){
     if(!place)
         return;
     double val = node->children->val.val_float;
-    Operand i = newOperand(CONSTANT, false, val);
+    Operand i = newOperand(CONSTANT, 0, val);
     newInterCodes(ASSIGNIR, place, i);
     return;
 }
@@ -796,21 +862,23 @@ void IRArgs2(struct GTNode *node, Operand *arglist){
 
 
 void translate_Cond(struct GTNode *node, Operand label_true, Operand label_false){
+    Operand l1, l2, l3;
+    int relop;
+    Operand t1, t2, zero;
     switch(node->no){
     case 2://Exp AND Exp
-        Operand l1 = newOperand(LABEL);
+        l1 = newOperand(LABEL);
         translate_Cond(node->children, l1, label_false);
         newInterCodes(LABELIR, l1);
         translate_Cond(node->children->next->next, label_true, label_false);
         break;
     case 3://Exp OR Exp
-        Operand l1 = newOperand(LABEL);
+        l1 = newOperand(LABEL);
         translate_Cond(node->children, label_true, l1);
         newInterCodes(LABELIR, l1);
         translate_Cond(node->children->next->next, label_true, label_false);
         break;
     case 4://Exp RELOP Exp
-        int relop;
         if(!strcmp("<=", node->children->next->val.val_string))
             relop = LE;
         else if(!strcmp("<", node->children->next->val.val_string))
@@ -823,8 +891,8 @@ void translate_Cond(struct GTNode *node, Operand label_true, Operand label_false
             relop = GE;
         else if(!strcmp(">", node->children->next->val.val_string))
             relop = G;
-        Operand t1 = newOperand(TMPVAR);
-        Operand t2 = newOperand(TMPVAR);
+        t1 = newOperand(TMPVAR);
+        t2 = newOperand(TMPVAR);
         IRExp0(node->children, t1);
         IRExp0(node->children->next->next, t2);
         newInterCodes(CONDJMPIR, t1, relop, t2, label_true);
@@ -834,9 +902,9 @@ void translate_Cond(struct GTNode *node, Operand label_true, Operand label_false
         translate_Cond(node->children->next, label_false, label_true);
         break;
     default://other cases
-        Operand t1 = newOperand(TMPVAR);
+        t1 = newOperand(TMPVAR);
         IRExp0(node, t1);
-        Operand zero = newOperand(CONSTANT, true, 0);
+        zero = newOperand(CONSTANT, 1, 0);
         newInterCodes(CONDJMPIR, t1, NE, zero, label_true);
         newInterCodes(GOTOIR, label_false);
         break;

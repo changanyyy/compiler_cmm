@@ -83,6 +83,38 @@ GENF(Program, 0){
     head.next = NULL;
     deal_fun_dec = false;
     deal_same_fun = false;
+
+
+    //添加read函数
+    struct GTNode *nn1 = malloc(sizeof(struct GTNode));
+    strcpy(nn1->val.val_string, "read");
+    STE * ste1 = create_entry(true, NULL, nn1);
+
+    Type t1 = malloc(sizeof(struct Type_));
+    t1->kind = BASIC;
+    t1->u.basic = INT;
+    ste1->rettype = t1;
+    ste1->isdefine = true;
+    ste1->paratype = malloc(sizeof(struct ParaTypeNode));
+    ste1->paratype->paranum = 0;
+    ste1->paratype->typelist = NULL;
+    insert_entry(ste1);//TODO
+
+
+    //添加write函数
+    struct GTNode *nn2 = malloc(sizeof(struct GTNode));
+    strcpy(nn2->val.val_string, "write");
+    STE * ste2 = create_entry(true, NULL, nn2);
+    ste2->rettype =NULL;
+    ste2->isdefine = true;
+    Type t2 = malloc(sizeof(struct Type_));
+    t2->kind = BASIC;
+    t2->u.basic = INT;
+    NEWPTN(t2);
+    ste2->paratype = malloc(sizeof(struct ParaTypeNode));
+    ste2->paratype->paranum = 1;
+    ste2->paratype->typelist = newptn;
+    insert_entry(ste2);
     
     switch (node->no)
     {
