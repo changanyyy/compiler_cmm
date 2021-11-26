@@ -432,7 +432,7 @@ GENF2(VarDec, 1){
     //这时不需要把变量存在表里面
     //如果通过外部声明触发的话，需要存在符号表里
     STE *ste = search_entry(node->children->val.val_string);
-   
+    
     if(ste && !deal_same_fun){
         //重复定义
         print_error(3,node->children->first_line);

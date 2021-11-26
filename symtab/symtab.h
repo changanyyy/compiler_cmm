@@ -18,6 +18,7 @@ struct SymTabEntry{
     //符号名字
     char name[50];
     bool isdefine;
+    bool ispara;
     //一些信息
     Type type;
 

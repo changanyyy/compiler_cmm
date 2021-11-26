@@ -142,7 +142,6 @@ struct Operand_ *newOperand(int kind, ...){
 }
 
 void printOperand(Operand opd){
-    //printf("# %d #\n",opd->kind);
     switch(opd->kind){
     case VARABLE:
         printf("%s", opd->u.ste->name);
@@ -158,7 +157,9 @@ void printOperand(Operand opd){
         printf("&%s", opd->u.addr->name);
         break;
     case TMPVAR:
+    //printf("122342342\n");
         printf("t%d", opd->u.tmpnum);
+    //printf("\n122342342\n");
         break;
     case LABEL:
         printf("label%d", opd->u.labelnum);
@@ -171,7 +172,6 @@ void printInterCodes(struct InterCode *ir){
     //printf("%d\n", ir->kind);
     switch(ir->kind){        
     case ASSIGNIR://赋值 lhs := rhs
-    //printf("1\n");
         printOperand(ir->u.assign.lhs);
         printf(" := ");
         printOperand(ir->u.assign.rhs);
@@ -395,6 +395,7 @@ void IRVarDec0(struct GTNode *node, int mode){
 }
 void IRVarDec1(struct GTNode *node, int mode){
     STE *ste = search_entry(node->children->val.val_string);
+    if(mode == PARAIR)ste->ispara = true;
     CurVarDec = ste;
     //计算数组占用的空间
     if(ste->type->kind == ARRAY && mode == DECIR){
@@ -447,11 +448,14 @@ void IRVarList2(struct GTNode *node){
 }
 
 
+int para = 0;
 void IRParamDec0(struct GTNode *node){
     IRParamDec1(node);
 }
 void IRParamDec1(struct GTNode *node){
+    para = 1;
     IRVarDec0(node->children->next, PARAIR);
+    para = 0;
 }
 
 
@@ -677,7 +681,7 @@ void IRExp2(struct GTNode *node, Operand place){
     newInterCodes(ASSIGNIR, place, zero);
     translate_Cond(node, l1, l2);
     newInterCodes(LABELIR, l1);
-    newInterCodes(ASSIGNIR, place, 1);
+    newInterCodes(ASSIGNIR, place, one);
     newInterCodes(LABELIR, l2);
 }
 void IRExp3(struct GTNode *node, Operand place){
@@ -751,7 +755,7 @@ void IRExp12(struct GTNode *node, Operand place){//ID LP Args RP
     STE *ste = search_entry(node->children->val.val_string);
     Operand arglist;
     IRArgs0(node->children->next->next, &arglist);
-    //printf("111\n");
+
     if(!strcmp(ste->name, "write")){
         
         newInterCodes(WRITEIR, arglist);
@@ -764,6 +768,10 @@ void IRExp12(struct GTNode *node, Operand place){//ID LP Args RP
     }
     if(place)
         newInterCodes(CALLIR, place, ste);
+    else{
+        Operand ret = newOperand(TMPVAR);
+        newInterCodes(CALLIR, ret, ste);
+    }
     return;
 }
 void IRExp13(struct GTNode *node, Operand place){//ID LP RP
@@ -783,6 +791,7 @@ void IRExp13(struct GTNode *node, Operand place){//ID LP RP
 
 
 Type IRExp14(struct GTNode *node, Operand place){//Exp LB Exp RB
+    //printf("kkk\n");
     if(!place)
         return NULL; 
     Type type;
@@ -798,8 +807,11 @@ Type IRExp14(struct GTNode *node, Operand place){//Exp LB Exp RB
         newInterCodes(ADDIR, place, t1, t2);
     }
     else{
+        //printf("%d\n", type->kind);
         newInterCodes(ADDIR, place, t1, t2);
-        newInterCodes(ASSIGNSTARIR, place, place);
+        if(type->u.array.elem->kind != ARRAY){
+            newInterCodes(ASSIGNSTARIR, place, place);
+        }
     }
 
     //返回下一层元素
@@ -812,7 +824,7 @@ Type IRExp16(struct GTNode *node, Operand place){//ID
         return NULL;
     STE *ste = search_entry(node->children->val.val_string);
     Operand opd;
-    if(ste->type->kind == ARRAY){
+    if(ste->type->kind == ARRAY && !ste->ispara){
         opd = newOperand(ADDRESS, ste);
     }else{
         opd = newOperand(VARABLE, ste);
