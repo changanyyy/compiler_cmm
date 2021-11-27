@@ -6,7 +6,7 @@
 char name_list[1000][50];
 int name_list_idx = 0;
 
-
+int var_index = 1;
 //创建一个表项，返回表项指针
 STE *create_entry(bool isFunction, Type type, struct GTNode *syntaxNode){
     //printf("Create Entry: %s\n", syntaxNode->val.val_string);
@@ -17,7 +17,7 @@ STE *create_entry(bool isFunction, Type type, struct GTNode *syntaxNode){
     //new一个新表项
     STE *newentry = (STE *)malloc(sizeof(STE));
     memset(newentry, '\0', sizeof(STE));
-    
+    newentry->var_idx = var_index++;
     //表项名字
     strcpy(newentry->name, syntaxNode->val.val_string);
     //表项的类型：函数 or 变量

@@ -28,7 +28,7 @@ struct SymTabEntry{
     //存储返回值类型和参数类型
     Type rettype;
     struct FunPara *paratype; 
-
+    int var_idx;
     //待定 可能用于存放值
     union{ 
         int valint;

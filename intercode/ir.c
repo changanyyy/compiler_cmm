@@ -144,7 +144,8 @@ struct Operand_ *newOperand(int kind, ...){
 void printOperand(Operand opd){
     switch(opd->kind){
     case VARABLE:
-        printf("%s", opd->u.ste->name);
+        //printf("%s", opd->u.ste->name);
+        printf("var%d", opd->u.ste->var_idx);
         break;
     case CONSTANT:
         if(opd->isint) 
@@ -153,8 +154,8 @@ void printOperand(Operand opd){
             printf("#%f", (float)opd->u.float_value);
         break;
     case ADDRESS:
-        //printf("122342342\n");
-        printf("&%s", opd->u.addr->name);
+        //printf("&%s", opd->u.addr->name);
+        printf("&var%d", opd->u.addr->var_idx);
         break;
     case TMPVAR:
     //printf("122342342\n");
@@ -252,7 +253,7 @@ void printInterCodes(struct InterCode *ir){
         break;
     case DECIR://申请空间 DEC x [size]
         printf("DEC ");
-        printf("%s ", ir->u.dec.name->name);
+        printf("var%d ", ir->u.dec.name->var_idx);
         printf("%d", ir->u.dec.size);
         break;
     case FUNIR://函数 FUNCTION fun
@@ -261,7 +262,7 @@ void printInterCodes(struct InterCode *ir){
         break;
     case PARAIR://参数 PARA para
         printf("PARAM ");
-        printf("%s", ir->u.para->name);
+        printf("var%d", ir->u.para->var_idx);
         break;
     case ASSIGNADDRIR:
         printOperand(ir->u.aa.res);
@@ -278,8 +279,7 @@ void printInterCodes(struct InterCode *ir){
         printOperand(ir->u.sa.res);
         printf(" := ");
         printOperand(ir->u.sa.var);
-        //res->u.sa.res = va_arg(argptr, Operand);
-        //res->u.sa.var = va_arg(argptr, Operand);
+
         break;
     default: break;
     }
@@ -671,18 +671,20 @@ void IRExp1(struct GTNode *node, Operand place){
     return;
 }
 void IRExp2(struct GTNode *node, Operand place){
-    if(!place)
-        return;
+    
     Operand l1 = newOperand(LABEL);
     Operand l2 = newOperand(LABEL);
     Operand zero = newOperand(CONSTANT, 1, 0);
     Operand one = newOperand(CONSTANT, 1, 1);
     
-    newInterCodes(ASSIGNIR, place, zero);
+    if(place)
+        newInterCodes(ASSIGNIR, place, zero);
     translate_Cond(node, l1, l2);
     newInterCodes(LABELIR, l1);
-    newInterCodes(ASSIGNIR, place, one);
+    if(place)
+        newInterCodes(ASSIGNIR, place, one);
     newInterCodes(LABELIR, l2);
+
 }
 void IRExp3(struct GTNode *node, Operand place){
     IRExp2(node, place);
@@ -694,46 +696,40 @@ void IRExp4(struct GTNode *node, Operand place){
 //下面是表达式的加减乘除四则运算
 //加法
 void IRExp5(struct GTNode *node, Operand place){
-    if(!place)
-        return;
     Operand t1 = newOperand(TMPVAR);
     Operand t2 = newOperand(TMPVAR);
     IRExp0(node->children, t1);
     IRExp0(node->children->next->next, t2);
-    newInterCodes(ADDIR, place, t1, t2);
+    if(place)newInterCodes(ADDIR, place, t1, t2);
     return;
 }
 //减法
 void IRExp6(struct GTNode *node, Operand place){
-    if(!place)
-        return;
+
     Operand t1 = newOperand(TMPVAR);
     Operand t2 = newOperand(TMPVAR);
     IRExp0(node->children, t1);
     IRExp0(node->children->next->next, t2);
-    newInterCodes(SUBIR, place, t1, t2);
+    if(place)newInterCodes(SUBIR, place, t1, t2);
     return;
 }
 //乘法
 void IRExp7(struct GTNode *node, Operand place){
-    if(!place)
-        return;
     Operand t1 = newOperand(TMPVAR);
     Operand t2 = newOperand(TMPVAR);
     IRExp0(node->children, t1);
     IRExp0(node->children->next->next, t2);
-    newInterCodes(MULIR, place, t1, t2);
+    if(place) newInterCodes(MULIR, place, t1, t2);
     return;
 }
 //除法
-void IRExp8(struct GTNode *node, Operand place){
-    if(!place)
-        return;    
+void IRExp8(struct GTNode *node, Operand place){    
     Operand t1 = newOperand(TMPVAR);
     Operand t2 = newOperand(TMPVAR);
     IRExp0(node->children, t1);
     IRExp0(node->children->next->next, t2);
-    newInterCodes(DIVIR, place, t1, t2);
+    if(place)
+        newInterCodes(DIVIR, place, t1, t2);
     return;
 }
 
@@ -741,12 +737,11 @@ void IRExp9(struct GTNode *node, Operand place){
     IRExp0(node->children->next, place);
 }
 void IRExp10(struct GTNode *node, Operand place){
-    if(!place)
-        return;
     Operand t1 = newOperand(TMPVAR);
     IRExp0(node->children->next, t1);
     Operand zero = newOperand(CONSTANT, 1, 0);
-    newInterCodes(SUBIR, place, zero, t1);
+    if(place)
+        newInterCodes(SUBIR, place, zero, t1);
 }
 void IRExp11(struct GTNode *node, Operand place){
     IRExp2(node, place);
@@ -775,8 +770,6 @@ void IRExp12(struct GTNode *node, Operand place){//ID LP Args RP
     return;
 }
 void IRExp13(struct GTNode *node, Operand place){//ID LP RP
-    if(!place)
-        return;
     STE *ste = search_entry(node->children->val.val_string);
     if(!ste){
         printf("Error ir 324\n");
@@ -785,7 +778,12 @@ void IRExp13(struct GTNode *node, Operand place){//ID LP RP
         newInterCodes(READIR, place);
         return;
     }
-    newInterCodes(CALLIR, place, ste);
+    if(place)
+        newInterCodes(CALLIR, place, ste);
+    else{
+        Operand ret = newOperand(TMPVAR);
+        newInterCodes(CALLIR, ret, ste);
+    }
 }
 
 
@@ -905,6 +903,7 @@ void translate_Cond(struct GTNode *node, Operand label_true, Operand label_false
             relop = G;
         t1 = newOperand(TMPVAR);
         t2 = newOperand(TMPVAR);
+        //printf("KKKKKKKKK %s\n", node->children->children->val.val_string);
         IRExp0(node->children, t1);
         IRExp0(node->children->next->next, t2);
         newInterCodes(CONDJMPIR, t1, relop, t2, label_true);
