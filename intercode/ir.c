@@ -154,13 +154,10 @@ void printOperand(Operand opd){
             printf("#%f", (float)opd->u.float_value);
         break;
     case ADDRESS:
-        //printf("&%s", opd->u.addr->name);
         printf("&var%d", opd->u.addr->var_idx);
         break;
     case TMPVAR:
-    //printf("122342342\n");
         printf("t%d", opd->u.tmpnum);
-    //printf("\n122342342\n");
         break;
     case LABEL:
         printf("label%d", opd->u.labelnum);
@@ -170,7 +167,6 @@ void printOperand(Operand opd){
 }
 
 void printInterCodes(struct InterCode *ir){
-    //printf("%d\n", ir->kind);
     switch(ir->kind){        
     case ASSIGNIR://赋值 lhs := rhs
         printOperand(ir->u.assign.lhs);
@@ -789,7 +785,6 @@ void IRExp13(struct GTNode *node, Operand place){//ID LP RP
 
 
 Type IRExp14(struct GTNode *node, Operand place){//Exp LB Exp RB
-    //printf("kkk\n");
     if(!place)
         return NULL; 
     Type type;
@@ -805,13 +800,11 @@ Type IRExp14(struct GTNode *node, Operand place){//Exp LB Exp RB
         newInterCodes(ADDIR, place, t1, t2);
     }
     else{
-        //printf("%d\n", type->kind);
         newInterCodes(ADDIR, place, t1, t2);
         if(type->u.array.elem->kind != ARRAY){
             newInterCodes(ASSIGNSTARIR, place, place);
         }
     }
-
     //返回下一层元素
     return type->u.array.elem;
 }

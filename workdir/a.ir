@@ -1,0 +1,296 @@
+FUNCTION merge :
+PARAM var3
+PARAM var4
+PARAM var5
+PARAM var6
+DEC var8 40
+DEC var9 40
+t2 := var5
+t4 := var4
+t5 := #1
+t3 := t4 - t5
+t1 := t2 - t3
+var13 := t1
+t7 := var6
+t8 := var5
+t6 := t7 - t8
+var14 := t6
+t9 := #0
+var10 := t9
+LABEL label1 :
+t10 := var10
+t11 := var13
+IF t10 < t11 GOTO label2
+GOTO label3
+LABEL label2 :
+t14 := &var8
+t15 := var10
+t15 := t15 * #4
+t12 := t14 + t15
+t16 := var3
+t18 := var4
+t19 := var10
+t17 := t18 + t19
+t17 := t17 * #4
+t13 := t16 + t17
+t13 := *t13
+*t12 := t13
+t21 := var10
+t22 := #1
+t20 := t21 + t22
+var10 := t20
+GOTO label1
+LABEL label3 :
+t23 := #0
+var11 := t23
+LABEL label4 :
+t24 := var11
+t25 := var14
+IF t24 < t25 GOTO label5
+GOTO label6
+LABEL label5 :
+t28 := &var9
+t29 := var11
+t29 := t29 * #4
+t26 := t28 + t29
+t30 := var3
+t34 := var5
+t35 := #1
+t32 := t34 + t35
+t33 := var11
+t31 := t32 + t33
+t31 := t31 * #4
+t27 := t30 + t31
+t27 := *t27
+*t26 := t27
+t37 := var11
+t38 := #1
+t36 := t37 + t38
+var11 := t36
+GOTO label4
+LABEL label6 :
+t39 := #0
+var10 := t39
+t40 := #0
+var11 := t40
+t41 := var4
+var12 := t41
+LABEL label7 :
+t42 := var10
+t43 := var13
+IF t42 < t43 GOTO label10
+GOTO label9
+LABEL label10 :
+t44 := var11
+t45 := var14
+IF t44 < t45 GOTO label8
+GOTO label9
+LABEL label8 :
+t48 := &var8
+t49 := var10
+t49 := t49 * #4
+t46 := t48 + t49
+t46 := *t46
+t50 := &var9
+t51 := var11
+t51 := t51 * #4
+t47 := t50 + t51
+t47 := *t47
+IF t46 <= t47 GOTO label11
+GOTO label12
+LABEL label11 :
+t54 := var3
+t55 := var12
+t55 := t55 * #4
+t52 := t54 + t55
+t56 := &var8
+t57 := var10
+t57 := t57 * #4
+t53 := t56 + t57
+t53 := *t53
+*t52 := t53
+t59 := var10
+t60 := #1
+t58 := t59 + t60
+var10 := t58
+GOTO label13
+LABEL label12 :
+t63 := var3
+t64 := var12
+t64 := t64 * #4
+t61 := t63 + t64
+t65 := &var9
+t66 := var11
+t66 := t66 * #4
+t62 := t65 + t66
+t62 := *t62
+*t61 := t62
+t68 := var11
+t69 := #1
+t67 := t68 + t69
+var11 := t67
+LABEL label13 :
+t71 := var12
+t72 := #1
+t70 := t71 + t72
+var12 := t70
+GOTO label7
+LABEL label9 :
+LABEL label14 :
+t73 := var10
+t74 := var13
+IF t73 < t74 GOTO label15
+GOTO label16
+LABEL label15 :
+t77 := var3
+t78 := var12
+t78 := t78 * #4
+t75 := t77 + t78
+t79 := &var8
+t80 := var10
+t80 := t80 * #4
+t76 := t79 + t80
+t76 := *t76
+*t75 := t76
+t82 := var10
+t83 := #1
+t81 := t82 + t83
+var10 := t81
+t85 := var12
+t86 := #1
+t84 := t85 + t86
+var12 := t84
+GOTO label14
+LABEL label16 :
+LABEL label17 :
+t87 := var11
+t88 := var14
+IF t87 < t88 GOTO label18
+GOTO label19
+LABEL label18 :
+t91 := var3
+t92 := var12
+t92 := t92 * #4
+t89 := t91 + t92
+t93 := &var9
+t94 := var11
+t94 := t94 * #4
+t90 := t93 + t94
+t90 := *t90
+*t89 := t90
+t96 := var11
+t97 := #1
+t95 := t96 + t97
+var11 := t95
+t99 := var12
+t100 := #1
+t98 := t99 + t100
+var12 := t98
+GOTO label17
+LABEL label19 :
+t101 := #0
+RETURN t101
+FUNCTION merge_sort :
+PARAM var15
+PARAM var16
+PARAM var17
+t102 := #0
+var19 := t102
+t103 := var16
+t104 := var17
+IF t103 >= t104 GOTO label20
+GOTO label21
+LABEL label20 :
+t105 := #0
+RETURN t105
+LABEL label21 :
+t107 := var16
+t111 := var17
+t112 := var16
+t109 := t111 - t112
+t110 := #2
+t108 := t109 / t110
+t106 := t107 + t108
+var19 := t106
+t113 := var15
+t114 := var16
+t115 := var19
+ARG t115
+ARG t114
+ARG t113
+t116 := CALL merge_sort
+t117 := var15
+t119 := var19
+t120 := #1
+t118 := t119 + t120
+t121 := var17
+ARG t121
+ARG t118
+ARG t117
+t122 := CALL merge_sort
+t123 := var15
+t124 := var16
+t125 := var19
+t126 := var17
+ARG t126
+ARG t125
+ARG t124
+ARG t123
+t127 := CALL merge
+t128 := #0
+RETURN t128
+FUNCTION main :
+t129 := #6
+var21 := t129
+DEC var22 24
+t130 := #0
+var23 := t130
+LABEL label22 :
+t131 := var23
+t132 := var21
+IF t131 < t132 GOTO label23
+GOTO label24
+LABEL label23 :
+t135 := &var22
+t136 := var23
+t136 := t136 * #4
+t133 := t135 + t136
+READ t134
+*t133 := t134
+t138 := var23
+t139 := #1
+t137 := t138 + t139
+var23 := t137
+GOTO label22
+LABEL label24 :
+t140 := &var22
+t141 := #0
+t143 := var21
+t144 := #1
+t142 := t143 - t144
+ARG t142
+ARG t141
+ARG t140
+t145 := CALL merge_sort
+t146 := #0
+var23 := t146
+LABEL label25 :
+t147 := var23
+t148 := var21
+IF t147 < t148 GOTO label26
+GOTO label27
+LABEL label26 :
+t150 := &var22
+t151 := var23
+t151 := t151 * #4
+t149 := t150 + t151
+t149 := *t149
+WRITE t149
+t153 := var23
+t154 := #1
+t152 := t153 + t154
+var23 := t152
+GOTO label25
+LABEL label27 :
+t155 := #0
+RETURN t155

@@ -9,8 +9,6 @@
 
 void yyrestart(FILE *);
 
-
-
 int main(int argc, char** argv){
 
     if(argc <= 1){
@@ -40,7 +38,8 @@ int main(int argc, char** argv){
     
     Program0(root);
     IRProgram0(root);
+    freopen(argv[2],"w",stdout);    
     printIC();
-
+    
     return 0;
 }
