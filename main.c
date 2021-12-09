@@ -40,8 +40,10 @@ int main(int argc, char** argv){
     Program0(root);
     IRProgram0(root);
     freopen(argv[2],"w",stdout);    
-    printIC();
+    //printIC();
     
+    genObjCode();
+    printObjCodes();
     
     return 0;
 }

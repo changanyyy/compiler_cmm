@@ -23,6 +23,8 @@ STE *create_entry(bool isFunction, Type type, struct GTNode *syntaxNode){
     //表项的类型：函数 or 变量
     newentry->entrytype = isFunction?FUNCTION:VARIABLE;
 
+    newentry->have_addr = false;
+    newentry->fp_offset = 0;
 
     //基础类型还会有值
     if(!isFunction){

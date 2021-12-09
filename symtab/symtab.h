@@ -35,6 +35,7 @@ struct SymTabEntry{
         float valfloat;    
     }val;
 
+    bool have_addr;
     int fp_offset;
 
     //红黑树节点，这个是linux红黑树的特殊实现

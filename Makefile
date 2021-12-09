@@ -32,7 +32,7 @@ syntax-c: $(YFILE)
 .PHONY: clean test t
 test:
 	make
-
+	./parser Test/test.cmm > Test/test.s
 
 
 

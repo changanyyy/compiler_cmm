@@ -106,6 +106,7 @@ struct Operand_ *newOperand(int kind, ...){
     opd->kind = kind;
 
     opd->regidx = -1;
+    opd->have_addr = false;
     opd->fp_offset = 0;
 
     int isint;

@@ -12,7 +12,8 @@ struct ObjCode{
         LABELO, LIO, MOVEO, 
         ADDIO, ADDO, SUBO, MULO, DIVO, MFLO,
         LWO, SWO, JO, JALO, JRO, 
-        BEQO, BNEO, BGTO, BLTO, BGEO, BLEO
+        BEQO, BNEO, BGTO, BLTO, BGEO, BLEO,
+        FUNCO
     } kind;
     union
     {
@@ -28,6 +29,7 @@ struct ObjCode{
         struct {STE *f; } jal;
         struct {} jr;
         struct {int reg1, reg2, x;} b;
+        struct {STE *f; }func;
     };
 
     struct ObjCode *pre;
@@ -66,6 +68,9 @@ void printObjCodes();
 
 #define AVAIL_REG_MIN_IDX 8
 #define AVAIL_REG_MAX_IDX 15
+
+#define REG_V0 2
+#define REG_V1 3
 
 #define REG_A0 4
 #define REG_A1 5
