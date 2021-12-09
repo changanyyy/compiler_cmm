@@ -105,6 +105,9 @@ struct Operand_ *newOperand(int kind, ...){
     Operand opd = (Operand)malloc(sizeof(struct Operand_));
     opd->kind = kind;
 
+    opd->regidx = -1;
+    opd->fp_offset = 0;
+
     int isint;
     va_list argptr;
     va_start(argptr, kind);

@@ -6,6 +6,7 @@
 #include"semantic/semantic.h"
 #include"symtab/symtab.h"
 #include"intercode/ir.h"
+#include"objcode/obj.h"
 
 void yyrestart(FILE *);
 
@@ -40,6 +41,7 @@ int main(int argc, char** argv){
     IRProgram0(root);
     freopen(argv[2],"w",stdout);    
     printIC();
+    
     
     return 0;
 }

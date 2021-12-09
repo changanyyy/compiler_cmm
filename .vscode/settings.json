@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "symtab.h": "c",
-        "syntax.h": "c"
+        "syntax.h": "c",
+        "obj.h": "c"
     }
 }

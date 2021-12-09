@@ -25,6 +25,8 @@ struct Operand_{
         int tmpnum;
         int labelnum;
     }u;
+    int regidx;//变量和临时变量的寄存器编号
+    int fp_offset;
 
     Operand pre,nxt;
 };

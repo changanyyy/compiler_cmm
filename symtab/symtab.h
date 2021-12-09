@@ -35,6 +35,8 @@ struct SymTabEntry{
         float valfloat;    
     }val;
 
+    int fp_offset;
+
     //红黑树节点，这个是linux红黑树的特殊实现
     struct rb_node node;
 };
