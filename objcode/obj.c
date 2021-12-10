@@ -1,5 +1,15 @@
 #include"obj.h"
 
+void lockreg(int i){
+    regs[i].lock = true;
+}
+
+void unlockreg(int i){
+    regs[i].lock = false;
+}
+
+bool main_func;
+
 //生成目标代码，总函数
 void genObjCode(){
     //再生成目标代码之前，先初始化一些数据结构
@@ -10,11 +20,14 @@ void genObjCode(){
     //初始化目标代码双向循环链表
     OCHead.pre = OCHead.nxt = &OCHead;
 
+    main_func = false;
+
     //寄存器结构 32个
     for(int i = 0; i < 32; i++){
         regs[i].no = i;
         regs[i].occupied = false;
         regs[i].op = NULL;
+        regs[i].lock = false;
         regs[i].nxt = NULL;
     }
 
@@ -40,23 +53,38 @@ int arg_idx = 0;
 //形参编号，把相应实参对应过来（每个形参要分配对应实参的地址）
 int para_idx = 0;
 
+
+
 //解析每一条中间代码
 void parseInterCode(struct InterCode *ir){
     int reg1, reg2, reg3, imm;
     switch(ir->kind){
     case ASSIGNIR:
         reg1 = getReg(ir->u.assign.lhs);
+        lockreg(reg1);
         if(ir->u.assign.rhs->kind == CONSTANT){
             imm = ir->u.assign.rhs->u.int_value;
             newObjCode(LIO, reg1, imm);  
+            spilling(reg1);
         } else{
-            reg2 = getReg(ir->u.assign.rhs);
-            newObjCode(MOVEO, reg1, reg2);
+            if(ir->u.assign.rhs->kind == ADDRESS){
+                imm = ir->u.assign.rhs->u.addr->fp_offset;
+                newObjCode(ADDIO, reg1, REG_FP, imm);  
+                spilling(reg1);
+            }
+            else{
+                reg2 = getReg(ir->u.assign.rhs);
+                newObjCode(MOVEO, reg1, reg2);
+                spilling(reg1);
+                freeReg(reg2);
+            }
         }
+        unlockreg(reg1);
         break;
     case ADDIR:
     //res
         reg1 = getReg(ir->u.binop.res);
+        lockreg(reg1);
     //op1    
         if(ir->u.binop.op1->kind == CONSTANT){
             //如果第一个操作数就是constant，先存在v0寄存器里
@@ -65,6 +93,7 @@ void parseInterCode(struct InterCode *ir){
         }else{
             reg2 = getReg(ir->u.binop.op1);
         }
+        lockreg(reg2);
     //op2    
         if(ir->u.binop.op2->kind == CONSTANT){
             imm = ir->u.binop.op2->u.int_value;
@@ -72,11 +101,17 @@ void parseInterCode(struct InterCode *ir){
         } else{
             reg3 = getReg(ir->u.binop.op2);
             newObjCode(ADDO, reg1, reg2, reg3);
+            freeReg(reg3);
         }
+        spilling(reg1);
+        if(reg2!=REG_V0)freeReg(reg2);
+        unlockreg(reg1);
+        unlockreg(reg2);
         break;
     case SUBIR:
     //res
         reg1 = getReg(ir->u.binop.res);
+        lockreg(reg1);
     //op1    
         if(ir->u.binop.op1->kind == CONSTANT){
             //如果第一个操作数就是constant，先存在v0寄存器里
@@ -85,6 +120,7 @@ void parseInterCode(struct InterCode *ir){
         }else{
             reg2 = getReg(ir->u.binop.op1);
         }
+        lockreg(reg2);
     //op2
         if(ir->u.binop.op2->kind == CONSTANT){
             imm = ir->u.binop.op2->u.int_value;
@@ -92,11 +128,17 @@ void parseInterCode(struct InterCode *ir){
         } else{
             reg3 = getReg(ir->u.binop.op2);
             newObjCode(SUBO, reg1, reg2, reg3);
+            freeReg(reg3);
         }
+        spilling(reg1);
+        if(reg2!=REG_V0)freeReg(reg2);
+        unlockreg(reg1);
+        unlockreg(reg2);
         break;
     case MULIR:
     //res
         reg1 = getReg(ir->u.binop.res);
+        lockreg(reg1);
     //op1    
         if(ir->u.binop.op1->kind == CONSTANT){
             //如果第一个操作数就是constant，先存在v0寄存器里
@@ -105,6 +147,7 @@ void parseInterCode(struct InterCode *ir){
         }else{
             reg2 = getReg(ir->u.binop.op1);
         }
+        lockreg(reg2);
     //op2
         if(ir->u.binop.op2->kind == CONSTANT){
             //如果第二个操作数就是constant，先存在v1寄存器里
@@ -114,10 +157,16 @@ void parseInterCode(struct InterCode *ir){
             reg3 = getReg(ir->u.binop.op2);
         }
         newObjCode(MULO, reg1, reg2, reg3);
+        spilling(reg1);
+        if(reg2 != REG_V0)freeReg(reg2);
+        if(reg3 != REG_V1)freeReg(reg3);
+        unlockreg(reg1);
+        unlockreg(reg2);
         break;
     case DIVIR://加减乘除 
     //res
         reg1 = getReg(ir->u.binop.res);
+        lockreg(reg1);
     //op1
         if(ir->u.binop.op1->kind == CONSTANT){
             //如果第一个操作数就是constant，先存在v0寄存器里
@@ -126,6 +175,7 @@ void parseInterCode(struct InterCode *ir){
         }else{
             reg2 = getReg(ir->u.binop.op1);
         }
+        lockreg(reg2);
     //op2
         if(ir->u.binop.op2->kind == CONSTANT){
             //如果第二个操作数就是constant，先存在v1寄存器里
@@ -136,6 +186,11 @@ void parseInterCode(struct InterCode *ir){
         }
         newObjCode(DIVO, reg2, reg3);
         newObjCode(MFLO, reg1);
+        spilling(reg1);
+        if(reg2 != REG_V0)freeReg(reg2);
+        if(reg3 != REG_V1)freeReg(reg3);
+        unlockreg(reg1);
+        unlockreg(reg2);
         break;
     case LABELIR: 
         newObjCode(LABELO, ir->u.label->u.labelnum);
@@ -145,6 +200,7 @@ void parseInterCode(struct InterCode *ir){
         break;
     case CONDJMPIR://标号，无条件跳转，有条件跳转
         reg1 = getReg(ir->u.cjmp.lhs);
+        lockreg(reg1);
         reg2 = getReg(ir->u.cjmp.rhs);
         if(ir->u.cjmp.relop == G)newObjCode(BGTO, reg1, reg2, ir->u.cjmp.label->u.labelnum);
         else if(ir->u.cjmp.relop ==GE)newObjCode(BGEO, reg1, reg2, ir->u.cjmp.label->u.labelnum);
@@ -152,35 +208,51 @@ void parseInterCode(struct InterCode *ir){
         else if(ir->u.cjmp.relop ==L)newObjCode(BLTO, reg1, reg2, ir->u.cjmp.label->u.labelnum);
         else if(ir->u.cjmp.relop ==LE)newObjCode(BLEO, reg1, reg2, ir->u.cjmp.label->u.labelnum);
         else if(ir->u.cjmp.relop ==NE)newObjCode(BNEO, reg1, reg2, ir->u.cjmp.label->u.labelnum);
+        unlockreg(reg1);
         break;
     case READIR: 
     //TODO
+        newObjCode(READO);
+        reg1 = getReg(ir->u.read);
+        newObjCode(MOVEO, reg1, REG_V0);
+        spilling(reg1);
+        arg_idx = 0;
         break;
     case WRITEIR: //read和write函数
     //TODO
+        reg1 = getReg(ir->u.write);
+        newObjCode(MOVEO, REG_A0, reg1);
+        newObjCode(WRITEO);
+        arg_idx = 0;
         break;
     case CALLIR: 
         //先把sp的值确定，在现有sp基础上减去256(给出256的空间给参数)
         newObjCode(ADDIO, REG_SP, REG_FP, fp_offset - ARG_OFFSET);
-        newObjCode(JALO, ir->u.call.fun->name);
+        newObjCode(JALO, ir->u.call.fun);
+        reg1 = getReg(ir->u.call.res);
+        newObjCode(MOVEO, reg1, REG_V0);
+        spilling(reg1);
         arg_idx = 0;
         break;
     case ARGIR: 
         reg1 = getReg(ir->u.arg);
-        if(arg_idx >= 4){
-            //在fp_idx下面256
-            newObjCode(SWO, reg1, REG_FP, fp_offset - ARG_OFFSET + (arg_idx-4) * 4);
-        }
-        else{
-            //小于4个的参数存进a0-a3
-            newObjCode(MOVEO, REG_A0 + arg_idx, reg1);
-        }
+        newObjCode(SWO, reg1, REG_FP, fp_offset - ARG_OFFSET + arg_idx * 4);
         arg_idx++;
         break;
     case RETURNIR://函数调用和返回
         para_idx = 0;
         reg1 = REG_V0;//v0
         reg2 = getReg(ir->u.ret);
+        newObjCode(LWO, REG_RA, REG_FP, -4);
+        if(!main_func){
+            newObjCode(ADDIO, REG_SP, REG_FP, ARG_OFFSET);
+        }
+        else{
+            main_func = false;
+            newObjCode(MOVEO, REG_SP, REG_FP);
+        }
+        newObjCode(LWO, REG_FP, REG_FP, -8);
+        //放返回值
         newObjCode(MOVEO, reg1, reg2);
         newObjCode(JRO);
         break;
@@ -190,6 +262,7 @@ void parseInterCode(struct InterCode *ir){
         ir->u.dec.name->have_addr = true;
         break;
     case FUNIR:
+        if(!strcmp(ir->u.fun->name,"main"))main_func = true;
         newObjCode(FUNCO, ir->u.fun);
         //先把fp的offset重置
         fp_offset = -8;
@@ -199,31 +272,37 @@ void parseInterCode(struct InterCode *ir){
         newObjCode(MOVEO, REG_FP, REG_SP);
         //把ra存在栈中
         newObjCode(SWO, REG_RA, REG_FP, -4);
-
+        para_idx = ir->u.fun->paratype->paranum;
         break;
     case PARAIR://变量空间申请，函数名，函数参数
-        //当参数已经小于4号，已经在寄存器里面了。
-        if(para_idx >=4){
-            ir->u.para->have_addr = true;
-            ir->u.para->fp_offset = (para_idx-4) * 4;
-        }
-        para_idx++;
-
+        para_idx--;
+        if(para_idx<0)printf("error\n");
+        ir->u.para->have_addr = true;
+        ir->u.para->fp_offset = para_idx * 4;
         break;
     case ASSIGNADDRIR:
         //TODO 
         reg1 = getReg(ir->u.aa.res);
+
         newObjCode(ADDIO, reg1, REG_FP, ir->u.aa.var->u.addr->fp_offset);
+        spilling(reg1);
         break;
     case ASSIGNSTARIR:
         reg1 = getReg(ir->u.as.res);
+        lockreg(reg1);
         reg2 = getReg(ir->u.as.var);
         newObjCode(LWO, reg1, reg2, 0);
+        spilling(reg1);
+        freeReg(reg2);
+        unlockreg(reg1);
         break;
     case STARASSIGNIR:
         reg1 = getReg(ir->u.sa.var);
+        lockreg(reg1);
         reg2 = getReg(ir->u.sa.res);
         newObjCode(SWO, reg1, reg2, 0);
+        freeReg(reg2);
+        unlockreg(reg1);
         break;
     default: break;
     }
@@ -306,11 +385,18 @@ void newObjCode(int kind, ...){
 
 //获得某变量对应的寄存器
 int getReg(Operand op){
-    if(op->kind == VARIABLE){//如果是变量看看有没有寄存器
+    if(op->kind == VARIABLE && op->have_addr == false){//如果是变量看看有没有寄存器
         if(op->u.ste->have_addr){
             op->have_addr = true;
             op->fp_offset = op->u.ste->fp_offset;
         }
+        else if(op->u.addr->have_addr){
+            op->have_addr = true;
+            op->fp_offset = op->u.addr->fp_offset;
+        }
+    }
+    if(op->kind == VARIABLE){
+        op->regidx = op->u.ste->regidx;
     }
 
     int res = -1;
@@ -326,21 +412,16 @@ int getReg(Operand op){
     return res;
 }
 
-bool freeReg(int i){
-    if(regs[i].occupied){
-        regs[i].occupied = false;
-        regs[i].op->regidx = -1;
-        regs[i].op = NULL;
-        return true;
-    }
-    else return false;
-}
 
 bool allocateAddr(Operand op){
     if(op->have_addr == false){
-        fp_offset-=4;
+        fp_offset -= 4;
         op->fp_offset = fp_offset;
         op->have_addr = true;
+        if(op->kind == VARIABLE){
+            op->u.ste->have_addr = true;
+            op->u.ste->fp_offset = fp_offset;
+        }
         return true;
     }
     return false;
@@ -350,7 +431,7 @@ bool allocateAddr(Operand op){
 //分配一个寄存器，如果没有空闲的，就随机选一个，然后把原来的踢出去
 int allocateReg(Operand op){
     int regidx;
-    srand((unsigned)time(NULL));
+
     if(free_reg_list != NULL){//把空闲链表的第一个分配出去
         regidx = free_reg_list->no;//空闲链表截掉这个reg
         free_reg_list = free_reg_list->nxt;
@@ -360,10 +441,16 @@ int allocateReg(Operand op){
         regs[regidx].occupied = true;
         regs[regidx].op = op;
         op->regidx = regidx;
+        if(op->kind == VARIABLE){
+            op->u.ste->regidx = regidx;
+        }
     }
     else{
+        regidx = AVAIL_REG_MIN_IDX;
         //随机选择一个寄存器
-        regidx = rand() % (AVAIL_REG_MAX_IDX - AVAIL_REG_MIN_IDX + 1) + AVAIL_REG_MIN_IDX;
+        while(regs[regidx].lock){
+            regidx++;
+        }
         //spilling溢出到内存,相对于fp(30号)偏移offset
         newObjCode(SWO, regidx, 30, regs[regidx].op->fp_offset);
         newObjCode(LWO, regidx, 30, op->fp_offset);
@@ -371,14 +458,39 @@ int allocateReg(Operand op){
         //原来的op溢出，op->regidx = -1
         //新的op放进去
         regs[regidx].op->regidx = -1;
+        if(regs[regidx].op->kind == VARIABLE){
+            regs[regidx].op->u.ste->regidx = -1;
+        }
         regs[regidx].op = op;
         op->regidx = regidx;
+        if(op->kind == VARIABLE){
+            op->u.ste->regidx = regidx;
+        }
     }
     return regidx;
 }
 
+void spilling(int regidx){
+    if(regs[regidx].occupied == false)
+        return;
+    //spilling溢出到内存,相对于fp(30号)偏移offset
+    newObjCode(SWO, regidx, 30, regs[regidx].op->fp_offset);
+
+    //原来的op溢出，op->regidx = -1
+    regs[regidx].op->regidx = -1;
+    if(regs[regidx].op->kind == VARIABLE){
+        regs[regidx].op->u.ste->regidx = -1;
+    }
+    regs[regidx].occupied = false;
+    regs[regidx].op = NULL;
+    regs[regidx].nxt = free_reg_list;
+    free_reg_list = &regs[regidx];
+}
+
+
 
 void printObjCode(struct ObjCode *oc){
+    if(oc->kind != FUNCO && oc->kind != LABELO)printf("  ");
     switch(oc->kind){
     case LABELO: printf("label%d:", oc->label.x); break;
     case LIO:    printf("li $%d, %d", oc->li.reg1, oc->li.imm); break;
@@ -400,7 +512,9 @@ void printObjCode(struct ObjCode *oc){
     case BLTO:   printf("blt $%d, $%d, label%d", oc->b.reg1, oc->b.reg2, oc->b.x); break;
     case BGEO:   printf("bge $%d, $%d, label%d", oc->b.reg1, oc->b.reg2, oc->b.x); break;
     case BLEO:   printf("ble $%d, $%d, label%d", oc->b.reg1, oc->b.reg2, oc->b.x); break;
-    case FUNCO:  printf("\n%s:", oc->func.f->name);
+    case FUNCO:  printf("%s:", oc->func.f->name);break;
+    case READO:  printf("jal read");break;
+    case WRITEO: printf("jal write");break;
     default: break;
     }
     printf("\n");
@@ -411,11 +525,26 @@ void printObjCode(struct ObjCode *oc){
 void printObjCodes(){
     //输出开头部分
     printf(".data\n_prompt: .asciiz \"Enter an integer:\"\n_ret: .asciiz \"\\n\"\n.globl main\n.text\n");
-    printf("read:\nli $v0, 4\nla $a0, _prompt\nsyscall\nli $v0, 5\nsyscall\njr $ra\n");
-    printf("write:\nli $v0, 1\nsyscall\nli $v0, 4\nla $a0, _ret\nsyscall\nmove $v0, $0\njr $ra\n");
+    printf("read:\n  li $v0, 4\n  la $a0, _prompt\n  syscall\n  li $v0, 5\n  syscall\n  jr $ra\n");
+    printf("write:\n  li $v0, 1\n  syscall\n  li $v0, 4\n  la $a0, _ret\n  syscall\n  move $v0, $0\n  jr $ra\n");
     struct ObjCode *p =  OCHead.nxt;
     while(p != &OCHead){
         printObjCode(p);
         p = p->nxt;
     }
+}
+
+void freeReg(int regidx){
+    if(regs[regidx].occupied == false)
+        return;
+
+    //原来的op溢出，op->regidx = -1
+    regs[regidx].op->regidx = -1;
+    if(regs[regidx].op->kind == VARIABLE){
+        regs[regidx].op->u.ste->regidx = -1;
+    }
+    regs[regidx].occupied = false;
+    regs[regidx].op = NULL;
+    regs[regidx].nxt = free_reg_list;
+    free_reg_list = &regs[regidx];
 }

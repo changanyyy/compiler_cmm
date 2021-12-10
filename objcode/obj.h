@@ -13,7 +13,7 @@ struct ObjCode{
         ADDIO, ADDO, SUBO, MULO, DIVO, MFLO,
         LWO, SWO, JO, JALO, JRO, 
         BEQO, BNEO, BGTO, BLTO, BGEO, BLEO,
-        FUNCO
+        FUNCO, READO, WRITEO
     } kind;
     union
     {
@@ -40,6 +40,7 @@ struct ObjCode{
 struct RegStruct{
     bool occupied;
     int no;
+    bool lock;
     Operand op;//如果被占用了，存储的是什么变量
     struct RegStruct *nxt;//空闲链表里面的下一个
 } regs[32];
@@ -55,14 +56,14 @@ void newObjCode(int kind, ...);
 
 int getReg(Operand op);
 
-bool freeReg(int i);
-
-
 bool allocateAddr(Operand op);
 int allocateReg(Operand op);
 
 void printObjCode();
 void printObjCodes();
+
+void spilling(int regidx);
+void freeReg(int regidx);
 
 
 

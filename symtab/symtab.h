@@ -35,6 +35,7 @@ struct SymTabEntry{
         float valfloat;    
     }val;
 
+    int regidx;
     bool have_addr;
     int fp_offset;
 

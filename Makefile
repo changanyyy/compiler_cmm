@@ -32,14 +32,21 @@ syntax-c: $(YFILE)
 .PHONY: clean test t
 test:
 	make
-	./parser Test/test.cmm > Test/test.s
+	./parser Test/test1.cmm Test/test1.s
+	./parser Test/test2.cmm Test/test2.s
+	./parser Test/A-0.cmm Test/A-0.s
+	./parser Test/A-1.cmm Test/A-1.s
+	./parser Test/A-2.cmm Test/A-2.s
+	./parser Test/A-3.cmm Test/A-3.s
+	./parser Test/A-4.cmm Test/A-4.s
+	./parser Test/A-5.cmm Test/A-5.s
 
 
 
 
 t:
 	make
-	./parser ./Test_Advance/A-35.cmm
+	./parser Test/test.cmm
 
 clean:
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output

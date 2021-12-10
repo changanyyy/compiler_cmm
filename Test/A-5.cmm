@@ -1,0 +1,22 @@
+int adda(int ai, int aj) {
+    return ai + aj;
+}
+
+int subb(int si, int sj) {
+    return si - sj;
+}
+
+int mull(int mi, int mj) {
+    return mi * mj;
+}
+
+int main() {
+    int i, j, k, l, res;
+    i = read();
+    j = read();
+    k = read();
+    l = read();
+    res = adda(mull(subb(i, j), subb(i, j)), adda(k, l));
+    write(res);
+    return 0;
+}
