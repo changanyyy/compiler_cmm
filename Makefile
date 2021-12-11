@@ -40,6 +40,19 @@ test:
 	./parser Test/A-3.cmm Test/A-3.s
 	./parser Test/A-4.cmm Test/A-4.s
 	./parser Test/A-5.cmm Test/A-5.s
+	./parser Test/B-1.cmm Test/B-1.s
+	./parser Test/B-2.cmm Test/B-2.s
+	./parser Test/B-3.cmm Test/B-3.s
+	./parser Test/C-1.cmm Test/C-1.s
+	./parser Test/C-2.cmm Test/C-2.s
+	./parser Test/D-1.cmm Test/D-1.s
+	./parser Test_Advance/A-0.cmm Test_Advance/A-0.s
+	./parser Test_Advance/A-1.cmm Test_Advance/A-1.s
+	./parser Test_Advance/A-2.cmm Test_Advance/A-2.s
+	./parser Test_Advance/A-3.cmm Test_Advance/A-3.s
+	./parser Test_Advance/A-4.cmm Test_Advance/A-4.s
+	./parser Test_Advance/A-5.cmm Test_Advance/A-5.s
+	
 
 
 

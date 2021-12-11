@@ -452,19 +452,20 @@ int allocateReg(Operand op){
             regidx++;
         }
         //spilling溢出到内存,相对于fp(30号)偏移offset
-        newObjCode(SWO, regidx, 30, regs[regidx].op->fp_offset);
+        //newObjCode(SWO, regidx, 30, regs[regidx].op->fp_offset);
         newObjCode(LWO, regidx, 30, op->fp_offset);
 
         //原来的op溢出，op->regidx = -1
         //新的op放进去
         regs[regidx].op->regidx = -1;
         if(regs[regidx].op->kind == VARIABLE){
-            regs[regidx].op->u.ste->regidx = -1;
+           regs[regidx].op->u.ste->regidx = -1;
         }
+
         regs[regidx].op = op;
         op->regidx = regidx;
         if(op->kind == VARIABLE){
-            op->u.ste->regidx = regidx;
+             op->u.ste->regidx = regidx;
         }
     }
     return regidx;

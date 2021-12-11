@@ -1,5 +1,4 @@
-!lexical main.c Makefile README.md syntax.y 
-!include/syntax.h include/type.h 
-!util/rbtree.h util/rbtree.c util/tree_operation.h util/tree_operation.c
-!symtab/symtab.c symtab/symtab.h
-!semantic/semantic.h semantic/semantic.c
+Test/*.s
+Test/*.cmm
+Test_Advance/*.cmm
+Test_Advance/*.s

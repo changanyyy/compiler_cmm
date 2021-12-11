@@ -1,29 +1,14 @@
-int adda(int ai, int aj) {
-    return ai + aj;
-}
-
-int subb(int si, int sj) {
-  write(si);
-  write(sj);
-    return si - sj;
-}
-
-int mull(int mi, int mj) {
-    return mi * mj;
-}
-
 int main() {
-    int i, j, k, l, res;
-    i = read();
-    j = read();
-    k = read();
-    l = read();
+    int i = 1, j = 11, k = -9;
+    int result = 0;
     write(i);
     write(j);
     write(k);
-    write(l);
-    //res = adda(mull(subb(i, j), subb(i, j)), adda(k, l));
-    res = subb(i, j);
-    write(res);
+    k = k / j;
+    
+    write(k);
+
+    result = 4 * i + j / 17 + i * k;
+    write(result);
     return 0;
 }
